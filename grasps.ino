@@ -62,7 +62,9 @@ void setup() {
 void loop() {
   // Call the default pose function at the start
   defaultPose();
-
+  delay(3000);
+  peace();
+  delay(3000);
   // Call different grasp functions based on input or condition
   if (Serial.available()) {
     int input = Serial.read();
@@ -104,17 +106,17 @@ void defaultPose() {
 }
 
 void peace() {
-  emaxservo_FON.write(160);
+  emaxservo_FON.write(130);
   emaxservo_FII.write(20);
-  emaxservo_FTN.write(160);
+  emaxservo_FTN.write(20);
   emaxservo_MON.write(160);
-  emaxservo_MIN.write(20);
-  emaxservo_MTN.write(160);
+  emaxservo_MIN.write(50);
+  emaxservo_MTN.write(20);
   emaxservo_ROI.write(20);
-  emaxservo_RII.write(160);
+  emaxservo_RII.write(20);
   emaxservo_RTI.write(20);
-  emaxservo_LON.write(20);
-  emaxservo_LII.write(160);
+  emaxservo_LON.write(160);
+  emaxservo_LII.write(20);
   emaxservo_LTI.write(20);
   emaxservo_TON.write(90);
   emaxservo_TII.write(90);
