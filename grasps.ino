@@ -106,16 +106,16 @@ void defaultPose() {
 void peace() {
   emaxservo_FON.write(160);
   emaxservo_FII.write(20);
-  emaxservo_FTN.write(20);
-  emaxservo_MON.write(20);
-  emaxservo_MIN.write(160);
-  emaxservo_MTN.write(20);
+  emaxservo_FTN.write(160);
+  emaxservo_MON.write(160);
+  emaxservo_MIN.write(20);
+  emaxservo_MTN.write(160);
   emaxservo_ROI.write(20);
   emaxservo_RII.write(160);
-  emaxservo_RTI.write(160);
+  emaxservo_RTI.write(20);
   emaxservo_LON.write(20);
   emaxservo_LII.write(160);
-  emaxservo_LTI.write(160);
+  emaxservo_LTI.write(20);
   emaxservo_TON.write(90);
   emaxservo_TII.write(90);
   emaxservo_TTN.write(90);
