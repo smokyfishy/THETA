@@ -86,7 +86,7 @@ void loop() {
       lateralGrasp();
     } else if (input == '6') {
       peace();
-    }
+    } else if (input == )
     }
   }
 
