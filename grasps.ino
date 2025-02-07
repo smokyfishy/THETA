@@ -58,7 +58,6 @@ void setup() {
 
   for (int i = 0; i < 16; i++) {
     servos[i].attach(servoPins[i]);
-    
   }
 
   delay(50);  // Short delay for setup to complete
@@ -86,7 +85,7 @@ void loop() {
       lateralGrasp();
     } else if (input == '6') {
       peace();
-    } else if (input == )
+    }
     }
   }
 
@@ -129,11 +128,11 @@ void basicGrasp() {
 
 void okayGrasp() {
     // Set servo positions for okay (thumb/forefinger) grasp (half-contracted F, contracted T, extended M, R, L)
-  int okayGraspAngle[] = {110, 70, 170, 
+  int okayGraspAngle[] = {0, 0, 140, 
                       150, 30, 20, 
                       30, 150, 160, 
-                      30, 150, 160,
-                      160, 20, 160, 90};
+                      30, 160, 160,
+                      170, 170, 180, 90};
   setServoAngle(okayGraspAngle);
 }
 
