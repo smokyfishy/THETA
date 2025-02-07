@@ -58,6 +58,7 @@ void setup() {
 
   for (int i = 0; i < 16; i++) {
     servos[i].attach(servoPins[i]);
+    
   }
 
   delay(50);  // Short delay for setup to complete
@@ -71,12 +72,14 @@ void loop() {
   // Call different grasp functions based on input or condition
   if (Serial.available()) {
     int input = Serial.read();
-    if (input == '1') {
+    if (input == '0') {
+      defaultPose();
+    } else if (input == '1') {
       basicGrasp();
     } else if (input == '2') {
-      precisionGrasp();
+      peace();
     } else if (input == '3') {
-      hookGrasp();
+      okayGrasp();
     } else if (input == '4') {
       cylindricalGrasp();
     } else if (input == '5') {
@@ -122,6 +125,16 @@ void basicGrasp() {
                                               //emaxservo_LON 180, emaxservo_LII 0  , emaxservo_LTI 0,
                                               //emaxservo_TON 180, emaxservo_TII 0  , emaxservo_TTN 180, emaxservo_TRN 0};
   setServoAngle(basicGraspAngle);
+}
+
+void okayGrasp() {
+    // Set servo positions for okay (thumb/forefinger) grasp (half-contracted F, contracted T, extended M, R, L)
+  int okayGraspAngle[] = {110, 70, 170, 
+                      150, 30, 20, 
+                      30, 150, 160, 
+                      30, 150, 160,
+                      160, 20, 160, 90};
+  setServoAngle(okayGraspAngle);
 }
 
 void precisionGrasp() {
