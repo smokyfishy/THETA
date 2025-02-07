@@ -23,6 +23,24 @@ Servo emaxservo_TII;  // 45 TI I Thumb Inwards Inverted
 Servo emaxservo_TTN;  // 46 TT N Thumb Tendon Non
 Servo emaxservo_TRN;  // 24 TR N Thumb Rotation Non-Inverted
 
+Servo servos[] = {emaxservo_FON, emaxservo_FII, emaxservo_FTN, 
+                  emaxservo_MON, emaxservo_MIN, emaxservo_MTN, 
+                  emaxservo_ROI, emaxservo_RII, emaxservo_RTI, 
+                  emaxservo_LON, emaxservo_LII, emaxservo_LTI,
+                  emaxservo_TON, emaxservo_TII, emaxservo_TTN, emaxservo_TRN};
+
+int servoPins[] = {50, 51, 48,
+                   52, 53, 49,
+                   30, 31, 26, 
+                   28, 29, 27, 
+                   47, 45, 46, 24};
+
+int defaultAngle[] = {90, 90, 90,
+                      90, 90, 90,
+                      90, 90, 90,
+                      90, 90, 90,
+                      90, 90, 90, 90};
+
 // Other variables (to match your existing code)
 long default_counter = 1;
 int default_stage = 0;
@@ -38,33 +56,18 @@ void setup() {
   Serial2.begin(1000000);  // Serial communication for servos
   SERVO.pSerial = &Serial2;
 
-  // Attach servos to their respective pins
-  emaxservo_FON.attach(50);
-  emaxservo_FII.attach(51);
-  emaxservo_FTN.attach(48);
-  emaxservo_MON.attach(52);
-  emaxservo_MIN.attach(53);
-  emaxservo_MTN.attach(49);
-  emaxservo_ROI.attach(30);
-  emaxservo_RII.attach(31);
-  emaxservo_RTI.attach(26);
-  emaxservo_LON.attach(28);
-  emaxservo_LII.attach(29);
-  emaxservo_LTI.attach(27);
-  emaxservo_TON.attach(47);
-  emaxservo_TII.attach(45);
-  emaxservo_TTN.attach(46);
-  emaxservo_TRN.attach(24);
+  for (int i = 0; i < 16; i++) {
+    servos[i].attach(servoPins[i]);
+  }
 
   delay(50);  // Short delay for setup to complete
+
+  defaultPose();
+  delay(3000);
+  basicGrasp();
 }
 
 void loop() {
-  // Call the default pose function at the start
-  defaultPose();
-  delay(3000);
-  ballGrasp();
-  delay(3000);
   // Call different grasp functions based on input or condition
   if (Serial.available()) {
     int input = Serial.read();
@@ -78,69 +81,47 @@ void loop() {
       cylindricalGrasp();
     } else if (input == '5') {
       lateralGrasp();
-    }
-      else if (input == '6') {
+    } else if (input == '6') {
       peace();
     }
     }
   }
 
+void setServoAngle(int newAngle[]) {
+  for (int i=0; i < 16; i++) {
+    servos[i].write(newAngle[i]);
+  }
+}
+
 void defaultPose() {
   // Set all servos to the neutral/default position
-  emaxservo_FON.write(90);
-  emaxservo_FII.write(90);
-  emaxservo_FTN.write(90);
-  emaxservo_MON.write(90);
-  emaxservo_MIN.write(90);
-  emaxservo_MTN.write(90);
-  emaxservo_ROI.write(90);
-  emaxservo_RII.write(90);
-  emaxservo_RTI.write(90);
-  emaxservo_LON.write(90);
-  emaxservo_LII.write(90);
-  emaxservo_LTI.write(90);
-  emaxservo_TON.write(90);
-  emaxservo_TII.write(90);
-  emaxservo_TTN.write(90);
-  emaxservo_TRN.write(90);
+  setServoAngle(defaultAngle);
 }
 
 void peace() {
-  emaxservo_FON.write(130);
-  emaxservo_FII.write(20);
-  emaxservo_FTN.write(20);
-  emaxservo_MON.write(160);
-  emaxservo_MIN.write(50);
-  emaxservo_MTN.write(20);
-  emaxservo_ROI.write(160);
-  emaxservo_RII.write(20);
-  emaxservo_RTI.write(20);
-  emaxservo_LON.write(160);
-  emaxservo_LII.write(20);
-  emaxservo_LTI.write(20);
-  emaxservo_TON.write(160);
-  emaxservo_TII.write(160);
-  emaxservo_TTN.write(160);
-  emaxservo_TRN.write(90);
+  // Set servo positions for peace sign (extended F and M, contracted T, R, L)
+  int peaceAngle[] = {130, 20, 20, 
+                      160, 50, 20, 
+                      160, 20, 20, 
+                      160, 20, 20,
+                      160, 160, 160, 90};
+  setServoAngle(peaceAngle);
 }
 
-void ballGrasp() {
+void basicGrasp() {
   // Set servo positions for power grasp (closed fist)
-  emaxservo_FON.write(20);
-  emaxservo_FII.write(160);
-  emaxservo_FTN.write(160);
-  emaxservo_MON.write(20);
-  emaxservo_MIN.write(160);
-  emaxservo_MTN.write(160);
-  emaxservo_ROI.write(160);
-  emaxservo_RII.write(20);
-  emaxservo_RTI.write(50);
-  emaxservo_LON.write(140);
-  emaxservo_LII.write(50);
-  emaxservo_LTI.write(20);
-
-  emaxservo_TTN.write(160);
-  emaxservo_TRN.write(90);
+  int basicGraspAngle[] = {20, 160, 160, 
+                           20, 160, 160, 
+                           160, 20, 50, 
+                           140, 50, 20,
+                           160, 20, 160, 90};
+                            //full contraction (tightest pull of string) angles
+                            //Servo servos[] = {emaxservo_FON 0  , emaxservo_FII 180, emaxservo_FTN 180, 
+                                              //emaxservo_MON 0  , emaxservo_MIN 180, emaxservo_MTN 180, 
+                                              //emaxservo_ROI 180, emaxservo_RII 0  , emaxservo_RTI 0, 
+                                              //emaxservo_LON 180, emaxservo_LII 0  , emaxservo_LTI 0,
+                                              //emaxservo_TON 180, emaxservo_TII 0  , emaxservo_TTN 180, emaxservo_TRN 0};
+  setServoAngle(basicGraspAngle);
 }
 
 void precisionGrasp() {
