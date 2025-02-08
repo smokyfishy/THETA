@@ -35,11 +35,11 @@ int servoPins[] = {50, 51, 48,
                    28, 29, 27, 
                    47, 45, 46, 24};
 
-int defaultAngle[] = {90, 90, 90,
-                      90, 90, 90,
-                      90, 90, 90,
-                      90, 90, 90,
-                      90, 90, 90, 90};
+int defaultAngle[] = {180, 0, 0,
+                      180, 0, 0,
+                      0, 180, 180,
+                      0, 180, 180,
+                      0, 180, 0, 90};
 
 // Other variables (to match your existing code)
 long default_counter = 1;
