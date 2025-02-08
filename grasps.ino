@@ -71,6 +71,7 @@ void loop() {
   // Call different grasp functions based on input or condition
   if (Serial.available()) {
     int input = Serial.read();
+    
     if (input == '0') {
       defaultPose();
     } else if (input == '1') {
@@ -85,9 +86,28 @@ void loop() {
       lateralGrasp();
     } else if (input == '6') {
       peace();
-    }
+    } else if (input == '[') { // Check for array input start
+      int serialAngle[16];  // Array to store servo values
+      int index = 0;
+      String numberBuffer = ""; // Buffer for collecting digits
+      while (Serial.available()) {
+        char c = Serial.read();
+        if (c == ',' || c == ']') {  // Delimiter or end of input
+          if (numberBuffer.length() > 0) {
+            serialAngle[index++] = numberBuffer.toInt();
+            numberBuffer = ""; // Reset buffer
+          }
+          if (c == ']') break; // Exit loop if closing bracket
+        } else if (isDigit(c) || c == '-') {  // Accept digits and negative signs
+          numberBuffer += c;
+        }
+        if (index >= 16) break;  // Prevent overflow
+      }
+      // Apply values to servos
+      setServoAngle(serialAngle);
     }
   }
+}
 
 void setServoAngle(int newAngle[]) {
   for (int i=0; i < 16; i++) {
