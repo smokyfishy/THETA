@@ -5,7 +5,7 @@
 // SBUS object to communicate with the receiver
 SBUS x8r(Serial1);
 
-// Servo objects for controlling the hand joints
+// Servo objects for controlling the hand joints 2 = in, 1 = out
 Servo emaxservo_FON;  // 50 FO N Fore Outwards Normal
 Servo emaxservo_FII;  // 51 FI I Fore Inward Inverted
 Servo emaxservo_FTN;  // 48 FT N Fore Tendon Non
@@ -149,10 +149,10 @@ void basicGrasp() {
 void okayGrasp() {
     // Set servo positions for okay (thumb/forefinger) grasp (half-contracted F, contracted T, extended M, R, L)
   int okayGraspAngle[] = {0, 0, 140, 
-                      150, 30, 20, 
-                      30, 150, 160, 
-                      30, 160, 160,
-                      170, 170, 180, 90};
+                          150, 30, 20, 
+                          30, 150, 160, 
+                          30, 160, 160,
+                          170, 170, 180, 90};
   setServoAngle(okayGraspAngle);
 }
 
