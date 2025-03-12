@@ -262,7 +262,7 @@ print("✅ Cameras ready. Press 'q' to quit.")
 # Arduino Serial Communication Setup
 # ---------------------------------------------------------------
 try:
-    ser = serial.Serial('COM6', 115200, timeout=1)  # Update COM port as needed
+    ser = serial.Serial('COM6', 115200, timeout=5)  # Update COM port as needed
     print("✅ Arduino serial connection established!")
 except Exception as e:
     print(f"❌ Error: Could not open Arduino serial connection: {e}")
@@ -274,16 +274,13 @@ except Exception as e:
 plt.ion()
 fig, ax = plt.subplots(figsize=(10, 5))
 
-# ---------------------------------------------------------------
-# 6) MAIN LOOP: SEGMENT, HSV FILTER, CLASSIFY, AND DISPLAY
-# ---------------------------------------------------------------
 last_seg_time = time.time()
-seg_interval = 2.0
+seg_interval = 4.0
+last_formatted_serial = None  # Stores the most recent formatted serial message
 
 while True:
-    # Acquire front frame from front webcam
+    # Acquire frames from the three cameras
     ret_front, front_bgr = front_cam.read()
-    # Acquire right and left frames from webcams
     ret_right, right_bgr = right_cam.read()
     ret_left, left_bgr = left_cam.read()
 
@@ -292,10 +289,13 @@ while True:
         continue
 
     now = time.time()
+    # Every seg_interval seconds, update the segmentation, classification, and serial message
     if (now - last_seg_time) >= seg_interval:
         last_seg_time = now
 
+        # -------------------------------
         # SEGMENT each frame using the segmentation model
+        # -------------------------------
         seg_front, _ = segment_frame(front_bgr)
         seg_right, _ = segment_frame(right_bgr)
         seg_left,  _ = segment_frame(left_bgr)
@@ -322,66 +322,120 @@ while True:
         pred_angles = 90 + pred_classes * 10
         print("🔹 Predicted Joint Angles:", pred_angles)
 
-       # ------------------------------------------------
-        # Send predicted joint angles to Arduino via serial in the required format
         # ------------------------------------------------
-        if ser is not None and ser.is_open:
-            serial_data = "[" + ", ".join(str(angle) for angle in pred_angles) + "]"
-            print("Serial message to Arduino:", serial_data)  # Print the exact message
-            ser.write(serial_data.encode())
-            ser.flush()  # Ensure the data is sent out
+        # Process predicted angles into serial format
+        # ------------------------------------------------
+        # Convert predicted angles using the formula (angle - 90) * 2.
+        # For example, 90 -> 0, 100 -> 20, 110 -> 40, etc.
+        converted_angles = ((pred_angles - 90) * 2).astype(int)
+        serial_angles = []
 
+        # Process the four fingers (Index, Middle, Ring, Pinky)
+        # Predicted order: indices 3,4,5 (Index), 6,7,8 (Middle), 9,10,11 (Ring), 12,13,14 (Pinky)
+        for i in range(4):
+            start_idx = 3 + i * 3
+            mcp = converted_angles[start_idx]       # MCP angle for the finger
+            pip = converted_angles[start_idx + 1]     # PIP angle for the finger
+            # Serial format for each finger: [MCP, MCP, PIP]
+            serial_angles.extend([mcp, mcp, pip])
+
+        # Process the thumb (predicted indices 0,1,2)
+        thumb_angles = converted_angles[0:3].tolist()
+        # Move the thumb values to the end
+        serial_angles.extend(thumb_angles)
+
+        # Append the fixed value 120 as the last entry
+        serial_angles.append(120)
+
+        print("🔹 Serial Format before index-specific formatting:", serial_angles)
+
+        # ------------------------------------------------
+        # Further format the serial angles based on index-specific rules:
+        # For index 0, keep as is
+        # For index 1, 180 - angle
+        # For index 2, 180 - angle
+        # For index 3, keep as is
+        # For index 4, 180 - angle
+        # For index 5, 180 - angle
+        # For index 6, 180 - angle
+        # For index 7, keep as is
+        # For index 8, keep as is
+        # For index 9, 180 - angle
+        # For index 10, keep as is
+        # For index 11, keep as is
+        # For index 12, 180 - angle
+        # For index 13, keep as is
+        # For index 14, 180 - angle
+        # For index 15, keep as is (fixed value 120)
+        # ------------------------------------------------
+        indices_to_flip = {1, 2, 4, 5, 6, 9, 12, 14}
+        formatted_serial = []
+        for i, angle in enumerate(serial_angles):
+            if i in indices_to_flip:
+                formatted_serial.append(180 - angle)
+            else:
+                formatted_serial.append(angle)
+
+        print("🔹 Final Serial Format:", formatted_serial)
+
+        # Store the new formatted serial message for continuous sending
+        last_formatted_serial = formatted_serial
 
         # -------------------------------
-        # Update live bar chart with predictions using consistent styling
+        # Update live bar chart with predictions
         # -------------------------------
         ax.cla()
-
-        # Plot predicted angles (blue) and predicted bins (red) with improved styling
         ax.bar(np.arange(NUM_JOINTS) - 0.2, pred_angles, width=0.4,
                label="Predicted Angles (°)", color='blue', alpha=0.9, edgecolor='black')
         ax.bar(np.arange(NUM_JOINTS) + 0.2, pred_classes * 10 + 90, width=0.4,
                label="Predicted Bins", color='red', alpha=0.9, edgecolor='black')
-
-        # Configure x-ticks and labels
         ax.set_xticks(np.arange(NUM_JOINTS))
         ax.set_xticklabels([f"Joint {i}" for i in range(NUM_JOINTS)], fontsize=10, rotation=0)
-
-        # Set y-axis label, limits, and chart title with enhanced formatting
         ax.set_ylabel("Angle (°)", fontsize=12, fontweight='bold')
         ax.set_ylim(80, 190)
         ax.set_title("Predicted Joint Angles from Hand Pose", fontsize=14, fontweight='bold')
-
-        # Display legend and add grid lines
         ax.legend(fontsize=10, loc="best")
         ax.grid(True, linestyle='--', linewidth=0.5, alpha=0.7)
-
-        # Apply tight layout to minimize clipping and update the figure canvas
         plt.tight_layout()
         fig.canvas.draw()
         fig.canvas.flush_events()
 
-        # Overlay predicted angles on the segmented front image (remains unchanged)
+        # Overlay predicted angles on the segmented front image
         overlay_text = ", ".join([f"J{i}:{angle}" for i, angle in enumerate(pred_angles)])
         disp_front = seg_front.copy()
         cv2.putText(disp_front, overlay_text, (10, 30),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
-
         # Use segmented images for right and left views
         disp_right = seg_right
         disp_left  = seg_left
+
     else:
         # Not time to re-segment/classify; show raw images
         disp_front = front_bgr
         disp_right = right_bgr
         disp_left  = left_bgr
 
-    # Stack the three views horizontally for display
+    # -------------------------------
+    # Continuously send the last formatted serial message to Arduino
+    # -------------------------------
+    if last_formatted_serial is not None:
+        serial_data = "[" + ", ".join(str(angle) for angle in last_formatted_serial) + "]"
+        print("Serial message to Arduino:", serial_data)  # Debug print
+        if ser is not None and ser.is_open:
+            ser.write(serial_data.encode())
+            ser.flush()  # Ensure the message is sent out
+
+    # -------------------------------
+    # Display the images
+    # -------------------------------
     top_row = np.hstack([disp_front, disp_right, disp_left])
     cv2.imshow("3-Cams: Seg+HSV & Joint Angle Prediction", top_row)
-
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
+
+    # Small delay to control the continuous sending rate
+    time.sleep(0.1)
+
 
 # ---------------------------------------------------------------
 # Cleanup
