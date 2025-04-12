@@ -1,4 +1,4 @@
-# THETA: Triangulated Hand Estimation for Teleoperation and Automation to Enhance Compliance in Robotic Hand Control using Multi-view Vision-based Segmentation and Deep Learning
+# THETA: THETA: Triangulated Hand-State Estimation for Teleoperation and Automation in Robotic Hand Control
 <center><img src="https://github.com/smokyfishy/THETA/blob/main/Logo.png?raw=true" alt="THETA Logo" width="600"/></center>
 
 By Akshay Karthik and Alex Huang
