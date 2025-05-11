@@ -1,25 +1,25 @@
 import cv2
 
 # ==============================
-# ✅ Open Webcam (Default: ID 0)
+# Open Webcam (Default: ID 0)
 # ==============================
 camera_id = 3 # Change to 1, 2, etc., if you have multiple webcams
 cap = cv2.VideoCapture(camera_id)
 
 if not cap.isOpened():
-    print(f"❌ Error: Could not open webcam with ID {camera_id}")
+    print(f"Error: Could not open webcam with ID {camera_id}")
     exit()
 
-print("✅ Webcam is open. Press 'q' to exit.")
+print("Webcam is open. Press 'q' to exit.")
 
 # ==============================
-# ✅ Capture Frames in a Loop
+# Capture Frames in a Loop
 # ==============================
 while True:
     ret, frame = cap.read()  # Capture frame-by-frame
 
     if not ret:
-        print("⚠️ Warning: Failed to capture frame")
+        print("Warning: Failed to capture frame")
         break
 
     cv2.imshow("Webcam Feed", frame)  # Display the frame
@@ -29,7 +29,7 @@ while True:
         break
 
 # ==============================
-# ✅ Cleanup and Release Resources
+# Cleanup and Release Resources
 # ==============================
 print("🔄 Closing webcam...")
 cap.release()
