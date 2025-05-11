@@ -19,7 +19,7 @@ import serial  # Added for Arduino serial communication
 # Define device before usage
 # -------------------------------
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f"🔥 Using device: {device}")
+print(f"Using device: {device}")
 
 # ---------------------------------------------------------------
 # Placeholder Definitions
@@ -154,7 +154,7 @@ seg_model = HandSegModel(in_channels=3)
 seg_model.load_state_dict(checkpoint["state_dict"], strict=False)
 seg_model.eval()
 seg_model.to(device)
-print("✅ HandSegModel loaded successfully!")
+print("HandSegModel loaded successfully!")
 
 # ---------------------------------------------------------------
 # 2) TRANSFORMS & HELPER FUNCTIONS FOR SEGMENTATION
@@ -186,7 +186,7 @@ def segment_frame(frame_bgr: np.ndarray):
         overlayed = np.where(mask[..., None] == 1, 0.5 * frame_bgr + 0.5 * overlay, frame_bgr).astype(np.uint8)
         return overlayed, mask
     except Exception as e:
-        print(f"❌ Segmentation Error: {e}")
+        print(f"Segmentation Error: {e}")
         return frame_bgr, np.zeros(frame_bgr.shape[:2], dtype=np.uint8)
 
 def hsv_filter(frame_bgr: np.ndarray):
@@ -236,7 +236,7 @@ class MobileNetV2HandClassifier(nn.Module):
 classifier_model = MobileNetV2HandClassifier().to(device)
 classifier_model.load_state_dict(torch.load("mobilenetv2_hand_pose_classification.pth", map_location=device))
 classifier_model.eval()
-print("✅ MobileNetV2HandClassifier loaded successfully!")
+print("MobileNetV2HandClassifier loaded successfully!")
 
 # ---------------------------------------------------------------
 # 4) FRONT + WEBCAM SETUP (Using Front Webcam for Front View)
@@ -250,22 +250,22 @@ right_cam = cv2.VideoCapture(RIGHT_CAM_ID)
 left_cam  = cv2.VideoCapture(LEFT_CAM_ID)
 
 if not front_cam.isOpened():
-    print("❌ Error: Could not open Front Camera.")
+    print("Error: Could not open Front Camera.")
 if not right_cam.isOpened():
-    print("❌ Error: Could not open Right Camera.")
+    print("Error: Could not open Right Camera.")
 if not left_cam.isOpened():
-    print("❌ Error: Could not open Left Camera.")
+    print("Error: Could not open Left Camera.")
 
-print("✅ Cameras ready. Press 'q' to quit.")
+print("Cameras ready. Press 'q' to quit.")
 
 # ---------------------------------------------------------------
 # Arduino Serial Communication Setup
 # ---------------------------------------------------------------
 try:
     ser = serial.Serial('COM6', 115200, timeout=5)  # Update COM port as needed
-    print("✅ Arduino serial connection established!")
+    print("Arduino serial connection established!")
 except Exception as e:
-    print(f"❌ Error: Could not open Arduino serial connection: {e}")
+    print(f"Error: Could not open Arduino serial connection: {e}")
     ser = None
 
 # ---------------------------------------------------------------
@@ -285,7 +285,7 @@ while True:
     ret_left, left_bgr = left_cam.read()
 
     if not ret_front or not ret_right or not ret_left:
-        print("❌ Error: Could not read from one or more cameras.")
+        print("Error: Could not read from one or more cameras.")
         continue
 
     now = time.time()
@@ -320,7 +320,7 @@ while True:
             logits = classifier_model(combined_9ch)  # shape: [1,15,10]
             pred_classes = torch.argmax(logits, dim=2).cpu().numpy()[0]
         pred_angles = 90 + pred_classes * 10
-        print("🔹 Predicted Joint Angles:", pred_angles)
+        print("Predicted Joint Angles:", pred_angles)
 
         # ------------------------------------------------
         # Process predicted angles into serial format
@@ -347,7 +347,7 @@ while True:
         # Append the fixed value 120 as the last entry
         serial_angles.append(120)
 
-        print("🔹 Serial Format before index-specific formatting:", serial_angles)
+        print("Serial Format before index-specific formatting:", serial_angles)
 
         # ------------------------------------------------
         # Further format the serial angles based on index-specific rules:
@@ -376,7 +376,7 @@ while True:
             else:
                 formatted_serial.append(angle)
 
-        print("🔹 Final Serial Format:", formatted_serial)
+        print("Final Serial Format:", formatted_serial)
 
         # Store the new formatted serial message for continuous sending
         last_formatted_serial = formatted_serial
@@ -446,4 +446,4 @@ left_cam.release()
 cv2.destroyAllWindows()
 plt.ioff()
 plt.show()
-print("✅ Exited.")
+print("Exited.")
