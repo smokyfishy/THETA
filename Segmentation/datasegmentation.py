@@ -129,18 +129,18 @@ for i in range(NUM_IMAGES):
     new_angle_row = pd.DataFrame([[i] + frame_angles], columns=["Frame"] + ANGLE_COLUMNS)
     angles_df = pd.concat([angles_df, new_angle_row], ignore_index=True)
 
-    print(f"✅ Collected Frame {i+1}/{NUM_IMAGES}")
+    print(f" Collected Frame {i+1}/{NUM_IMAGES}")
 
 # === Save CSV Files ===
 angles_df.to_csv(angles_csv_path, index=False)
-print(f"✅ Angles data saved to {angles_csv_path}")
+print(f" Angles data saved to {angles_csv_path}")
 
 # === Cleanup Camera Resources ===
 pipeline.stop()
 right_cam.release()
 left_cam.release()
 cv2.destroyAllWindows()
-print("✅ Data Collection Complete! Moving to Segmentation...")
+print(" Data Collection Complete! Moving to Segmentation...")
 
 class HandSegModel(pl.LightningModule):
     """
@@ -265,13 +265,13 @@ model = HandSegModel(in_channels=3)
 model.load_state_dict(state_dict, strict=False)
 model.eval()
 
-print("✅ Model loaded successfully!")
+print(" Model loaded successfully!")
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model.to(device)  # ✅ Move model to GPU
+model.to(device)  #  Move model to GPU
 
 
-# ✅ Image Preprocessing for Model
+#  Image Preprocessing for Model
 def preprocess_image(image_path):
     """Load and preprocess image for segmentation model."""
     image = Image.open(image_path).convert("RGB")
@@ -282,7 +282,7 @@ def preprocess_image(image_path):
     ])
     return transform(image).unsqueeze(0).to(device), image
 
-# ✅ Segmentation Function
+#  Segmentation Function
 def segment_and_save(image_path, output_path):
     """Segments hands from an image and saves the result."""
     try:
@@ -291,27 +291,27 @@ def segment_and_save(image_path, output_path):
         with torch.no_grad():
             output_dict = model(input_tensor.to(device))
 
-        # ✅ Extract segmentation mask
-        output = torch.sigmoid(output_dict).squeeze(0).cpu().numpy()  # ✅ Move result to CPU for saving
+        #  Extract segmentation mask
+        output = torch.sigmoid(output_dict).squeeze(0).cpu().numpy()  #  Move result to CPU for saving
 
         segmented_mask = (output[1] > 0.5).astype(np.uint8)
 
-        # ✅ Resize mask to match original image
+        #  Resize mask to match original image
         segmented_mask = cv2.resize(segmented_mask, (original_image.width, original_image.height), interpolation=cv2.INTER_NEAREST)
 
-        # ✅ Convert to 3-channel for overlay
+        #  Convert to 3-channel for overlay
         mask_overlay = np.zeros((original_image.height, original_image.width, 3), dtype=np.uint8)
         mask_overlay[:, :, 2] = 255  # Blue overlay
 
-        # ✅ Blend with original image
+        #  Blend with original image
         original_np = np.array(original_image)
         overlayed_image = np.where(segmented_mask[:, :, None] == 1, 0.5 * original_np + 0.5 * mask_overlay, original_np).astype(np.uint8)
 
-        # ✅ Save segmented image
+        #  Save segmented image
         cv2.imwrite(output_path, overlayed_image)
 
 
-        print(f"✅ Processed & Saved: {output_path}")
+        print(f" Processed & Saved: {output_path}")
     
     except Exception as e:
         print(f"❌ Error processing {image_path}: {e}")
@@ -325,4 +325,4 @@ for i in range(NUM_IMAGES):
         # Run segmentation and save
         segment_and_save(raw_image_path, segmented_image_path)
 
-print("✅ All images segmented and saved!")
+print(" All images segmented and saved!")
