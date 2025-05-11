@@ -29,29 +29,29 @@ EXTRACT_PATH = "/content/gesture_dataset"  # Folder where dataset will be extrac
 if os.path.exists(ZIP_PATH):
     with zipfile.ZipFile(ZIP_PATH, 'r') as zip_ref:
         zip_ref.extractall(EXTRACT_PATH)
-    print(f"✅ Successfully extracted to {EXTRACT_PATH}")
+    print(f"Successfully extracted to {EXTRACT_PATH}")
 else:
-    print("❌ Zip file not found. Check the file path.")
+    print("Zip file not found. Check the file path.")
 
 from google.colab import drive
 import os
 import zipfile
 
-# ✅ MOUNT GOOGLE DRIVE
+# MOUNT GOOGLE DRIVE
 drive.mount('/content/drive')
 
-# ✅ SET FILE PATHS
+# SET FILE PATHS
 zip_path = "/content/drive/MyDrive/DexhandData/gesture_dataset.zip"
 extract_path = "/content/gesture_dataset/gesture_dataset"
 
-# ✅ CHECK IF ALREADY EXTRACTED
+# CHECK IF ALREADY EXTRACTED
 if not os.path.exists(extract_path):
     print("Extracting dataset...")
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
         zip_ref.extractall("/content/")
-    print("✅ Dataset extracted successfully!")
+    print("Dataset extracted successfully!")
 else:
-    print("✅ Dataset already extracted.")
+    print("Dataset already extracted.")
 
 # === IMPORT LIBRARIES ===
 import torch
@@ -77,7 +77,7 @@ import matplotlib.pyplot as plt
 from torch.utils.data import Dataset, DataLoader, random_split
 
 # ===============================
-# ✅ CONFIGURATION
+# CONFIGURATION
 # ===============================
 DATASET_PATH = "/content/gesture_dataset"
 BATCH_SIZE = 64
@@ -102,13 +102,13 @@ def process_angles(angles, num_bins=10):
     return rounded_angles, bin_indices
 
 # ===============================
-# ✅ HAND SEGMENTATION FUNCTION
+# HAND SEGMENTATION FUNCTION
 # ===============================
 def extract_hand_region(segmented_image_path):
     """Extracts only the hand region from a segmented image using HSV thresholding."""
     image = cv2.imread(segmented_image_path)
     if image is None:
-        print(f"❌ Warning: Could not read {segmented_image_path}")
+        print(f"Warning: Could not read {segmented_image_path}")
         return np.zeros((224, 224, 3), dtype=np.uint8), np.zeros((224, 224), dtype=np.uint8)
     image_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     lower_red1 = np.array([0, 120, 70])
@@ -122,7 +122,7 @@ def extract_hand_region(segmented_image_path):
     return hand_extracted, hand_mask
 
 # ===============================
-# ✅ ORIGINAL DATASET DEFINITION
+# ORIGINAL DATASET DEFINITION
 # ===============================
 class GestureDataset(Dataset):
     def __init__(self, dataset_path, transform=None, num_bins=10):
@@ -130,13 +130,13 @@ class GestureDataset(Dataset):
         self.transform = transform
         self.num_bins = num_bins
         self.data = []
-        print("📂 Loading dataset...")
+        print("Loading dataset...")
 
         gesture_folders = sorted(glob.glob(os.path.join(dataset_path, "gesture_*")))
         for gesture_folder in gesture_folders:
             angles_csv = os.path.join(gesture_folder, "angles.csv")
             if not os.path.exists(angles_csv):
-                print(f"⚠️ Skipping {gesture_folder} (No angles.csv found)")
+                print(f"Skipping {gesture_folder} (No angles.csv found)")
                 continue
 
             df = pd.read_csv(angles_csv)
@@ -156,7 +156,7 @@ class GestureDataset(Dataset):
                 if os.path.exists(seg_front) and os.path.exists(seg_right) and os.path.exists(seg_left):
                     self.data.append((seg_front, seg_right, seg_left, rounded_angles, joint_angle_bins))
 
-        print(f"✅ Dataset Loaded: {len(self.data)} samples found")
+        print(f"Dataset Loaded: {len(self.data)} samples found")
 
     def __len__(self):
         return len(self.data)
@@ -180,7 +180,7 @@ class GestureDataset(Dataset):
         return images, torch.tensor(rounded_angles, dtype=torch.float32), torch.tensor(joint_angle_bins, dtype=torch.long)
 
 # ===============================
-# ✅ DATA TRANSFORMATIONS
+# DATA TRANSFORMATIONS
 # ===============================
 transform = transforms.Compose([
     transforms.Resize(IMAGE_SIZE),
@@ -192,7 +192,7 @@ transform = transforms.Compose([
 dataset = GestureDataset(DATASET_PATH, transform, num_bins=NUM_BINS)
 
 # ===============================
-# ✅ VISUALIZATION FUNCTION
+# VISUALIZATION FUNCTION
 # ===============================
 import matplotlib.pyplot as plt
 import numpy as np
@@ -303,7 +303,7 @@ import timm  # For pretrained models
 import os
 
 # ===============================
-# ✅ CONFIGURATION
+# CONFIGURATION
 # ===============================
 BATCH_SIZE = 256
 ACCURACY_THRESHOLD = 5  # ±5° threshold
@@ -314,7 +314,7 @@ LR = 0.001
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # ===============================
-# ✅ MOBILENETV2 MODEL DEFINITION FOR HAND POSE
+# MOBILENETV2 MODEL DEFINITION FOR HAND POSE
 # ===============================
 class MobileNetV2HandRegressor(nn.Module):
     """
@@ -334,7 +334,7 @@ class MobileNetV2HandRegressor(nn.Module):
         return self.model(x)
 
 # ===============================
-# ✅ ACCURACY FUNCTION
+# ACCURACY FUNCTION
 # ===============================
 def compute_accuracy(preds, targets, threshold=ACCURACY_THRESHOLD):
     """
@@ -345,7 +345,7 @@ def compute_accuracy(preds, targets, threshold=ACCURACY_THRESHOLD):
     return (within_thresh.mean() * 100).item()
 
 # ===============================
-# ✅ DATASET & DATALOADERS
+# DATASET & DATALOADERS
 # ===============================
 # Assuming 'cached_dataset' is already loaded (with preprocessed 9-channel images and 15 joint angles)
 # For example, your cached_dataset might be a Torch dataset instance you created earlier.
@@ -364,7 +364,7 @@ val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
 # ===============================
-# ✅ TRAINING LOOP (MODIFIED TO SHOW PREDICTIONS)
+# TRAINING LOOP (MODIFIED TO SHOW PREDICTIONS)
 # ===============================
 model = MobileNetV2HandRegressor(num_joints=NUM_JOINTS).to(device)
 criterion = nn.MSELoss()
@@ -417,7 +417,7 @@ for epoch in range(NUM_EPOCHS):
 
 
 # ===============================
-# ✅ TEST EVALUATION
+# TEST EVALUATION
 # ===============================
 model.eval()
 test_loss = 0.0
@@ -441,7 +441,7 @@ import random
 import timm  # Pretrained models
 
 # ===============================
-# ✅ CONFIGURATION
+# CONFIGURATION
 # ===============================
 BATCH_SIZE = 256
 NUM_EPOCHS = 10
@@ -450,10 +450,10 @@ NUM_JOINTS = 15
 NUM_BINS = 10
 TEMPERATURE = 2.0  # Temperature scaling
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f"🔥 Using device: {device}")
+print(f"Using device: {device}")
 
 # ===============================
-# ✅ CLASS WEIGHTING TO HANDLE IMBALANCE
+# CLASS WEIGHTING TO HANDLE IMBALANCE
 # ===============================
 # Compute class weights based on dataset bin frequencies using the base_dataset
 bin_counts = torch.zeros(NUM_BINS)
@@ -464,7 +464,7 @@ bin_weights = 1.0 / (bin_counts + 1e-6)  # Avoid division by zero
 bin_weights = bin_weights / bin_weights.sum()  # Normalize
 
 # ===============================
-# ✅ MOBILENETV2-BASED CLASSIFICATION MODEL
+# MOBILENETV2-BASED CLASSIFICATION MODEL
 # ===============================
 class MobileNetV2HandClassifier(nn.Module):
     """
@@ -486,7 +486,7 @@ class MobileNetV2HandClassifier(nn.Module):
         return out / self.temperature  # Apply temperature scaling
 
 # ===============================
-# ✅ FOCAL LOSS FOR IMBALANCED LEARNING
+# FOCAL LOSS FOR IMBALANCED LEARNING
 # ===============================
 class FocalLoss(nn.Module):
     def __init__(self, gamma=2, alpha=bin_weights.to(device)):
@@ -501,7 +501,7 @@ class FocalLoss(nn.Module):
         return loss.mean()
 
 # ===============================
-# ✅ DATASET & DATALOADERS
+# DATASET & DATALOADERS
 # ===============================
 train_size = int(0.8 * len(dataset))
 val_size = int(0.1 * len(dataset))
@@ -512,19 +512,19 @@ train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
-print(f"🔹 Train Set: {len(train_dataset)} samples")
-print(f"🔹 Validation Set: {len(val_dataset)} samples")
-print(f"🔹 Test Set: {len(test_dataset)} samples")
+print(f"Train Set: {len(train_dataset)} samples")
+print(f"Validation Set: {len(val_dataset)} samples")
+print(f"Test Set: {len(test_dataset)} samples")
 
 # ===============================
-# ✅ MODEL INITIALIZATION
+# MODEL INITIALIZATION
 # ===============================
 model = MobileNetV2HandClassifier().to(device)
 criterion = FocalLoss()  # Replaces default CrossEntropyLoss
 optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
 # ===============================
-# ✅ ACCURACY FUNCTION
+# ACCURACY FUNCTION
 # ===============================
 def compute_classification_accuracy(preds, targets):
     """
@@ -538,7 +538,7 @@ def compute_classification_accuracy(preds, targets):
     return correct.mean().item() * 100  # Convert to percentage
 
 # ===============================
-# ✅ Initialize lists for per-batch metrics
+# Initialize lists for per-batch metrics
 # ===============================
 train_losses = []
 train_accs = []
@@ -546,7 +546,7 @@ val_losses = []
 val_accs = []
 
 # ===============================
-# ✅ TRAINING LOOP
+# TRAINING LOOP
 # ===============================
 val_iter = iter(val_loader)
 
@@ -564,14 +564,14 @@ for epoch in range(NUM_EPOCHS):
         optimizer.step()
 
         train_acc = compute_classification_accuracy(logits, angle_classes)
-        print(f"🟢 Batch {batch_idx+1}: Train Loss: {loss.item():.4f}, Train Acc: {train_acc:.2f}%")
+        print(f"Batch {batch_idx+1}: Train Loss: {loss.item():.4f}, Train Acc: {train_acc:.2f}%")
 
         # Save training metrics
         train_losses.append(loss.item())
         train_accs.append(train_acc)
 
         # ===============================
-        # ✅ VALIDATION (PER BATCH)
+        # VALIDATION (PER BATCH)
         # ===============================
         try:
             val_images, _, val_angle_classes = next(val_iter)
@@ -593,19 +593,19 @@ for epoch in range(NUM_EPOCHS):
         val_accs.append(val_acc)
 
         # ===============================
-        # ✅ SAMPLE PREDICTION DISPLAY
+        # SAMPLE PREDICTION DISPLAY
         # ===============================
         sample_idx = random.randint(0, val_images.shape[0] - 1)
         pred_classes = torch.argmax(val_logits[sample_idx], dim=1).cpu().numpy()
         actual_classes = val_angle_classes[sample_idx].cpu().numpy()
 
-        print(f"🔹 Example Prediction vs Actual (Batch {batch_idx+1})")
+        print(f"Example Prediction vs Actual (Batch {batch_idx+1})")
         print(f"   Predicted Bins: {pred_classes}")
         print(f"   Actual Bins:    {actual_classes}")
         print("-" * 80)
 
 # ===============================
-# ✅ TEST EVALUATION
+# TEST EVALUATION
 # ===============================
 model.eval()
 test_loss = 0.0
@@ -636,7 +636,7 @@ with torch.no_grad():
 
 test_loss /= num_samples
 test_acc = test_acc_sum / len(test_loader)
-print(f"\n🔥 Final Test Results: Loss = {test_loss:.4f}, Accuracy = {test_acc:.2f}%")
+print(f"\nFinal Test Results: Loss = {test_loss:.4f}, Accuracy = {test_acc:.2f}%")
 
 import torch
 
@@ -1236,7 +1236,7 @@ import matplotlib.pyplot as plt
 
 # Define device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f"🔥 Using device: {device}")
+print(f"Using device: {device}")
 
 # -------------------------------
 # Define the Model Class (must match training)
@@ -1308,16 +1308,16 @@ from PIL import Image
 import matplotlib.pyplot as plt
 
 # ===============================
-# ✅ CONFIGURATION
+# CONFIGURATION
 # ===============================
 NUM_JOINTS = 15
 NUM_BINS = 10
 IMAGE_SIZE = (224, 224)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f"🔥 Using device: {device}")
+print(f"Using device: {device}")
 
 # ===============================
-# ✅ MODEL DEFINITION (SAME AS TRAINING)
+# MODEL DEFINITION (SAME AS TRAINING)
 # ===============================
 class MobileNetV2HandClassifier(nn.Module):
     def __init__(self, num_joints=NUM_JOINTS, num_bins=NUM_BINS):
@@ -1334,20 +1334,20 @@ class MobileNetV2HandClassifier(nn.Module):
         return out
 
 # ===============================
-# ✅ LOAD TRAINED MODEL
+# LOAD TRAINED MODEL
 # ===============================
 model = MobileNetV2HandClassifier().to(device)
 model.load_state_dict(torch.load("mobilenetv2_hand_pose_classification.pth", map_location=device))  # Change path if needed
 model.eval()
 
 # ===============================
-# ✅ HSV HAND SEGMENTATION FUNCTION
+# HSV HAND SEGMENTATION FUNCTION
 # ===============================
 def extract_hand_region(image_path):
     """Extracts the hand region from a segmented image using HSV thresholding."""
     image = cv2.imread(image_path)
     if image is None:
-        print(f"❌ Warning: Could not read {image_path}")
+        print(f"Warning: Could not read {image_path}")
         return np.zeros((224, 224, 3), dtype=np.uint8)
 
     image_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -1366,7 +1366,7 @@ def extract_hand_region(image_path):
     return hand_extracted
 
 # ===============================
-# ✅ IMAGE PREPROCESSING FUNCTION
+# IMAGE PREPROCESSING FUNCTION
 # ===============================
 transform = transforms.Compose([
     transforms.Resize(IMAGE_SIZE),
@@ -1426,7 +1426,7 @@ def preprocess_images(front_path, right_path, left_path, visualize=False):
     return input_tensor
 
 # ===============================
-# ✅ PREDICTION FUNCTION
+# PREDICTION FUNCTION
 # ===============================
 def predict_joint_angles(front_path, right_path, left_path, visualize_preprocessed=True):
     """Predicts joint angles from three segmented images."""
@@ -1441,7 +1441,7 @@ def predict_joint_angles(front_path, right_path, left_path, visualize_preprocess
     return pred_classes, pred_angles
 
 # ===============================
-# ✅ UPLOAD & RUN PREDICTIONS
+# UPLOAD & RUN PREDICTIONS
 # ===============================
 front_image_path = "/content/gesture_dataset/gesture_14/frame_000_front_segmented.jpg"
 right_image_path = "/content/gesture_dataset/gesture_14/frame_000_front_segmented.jpg"
@@ -1450,10 +1450,10 @@ left_image_path = "/content/gesture_dataset/gesture_14/frame_000_front_segmented
 pred_bins, pred_angles = predict_joint_angles(front_image_path, right_image_path, left_image_path, visualize_preprocessed=True)
 
 # ===============================
-# ✅ DISPLAY RESULTS
+# DISPLAY RESULTS
 # ===============================
-print("\n🔹 **Predicted Joint Bins:**", pred_bins)
-print("🔹 **Mapped Angles (°):**", pred_angles)
+print("\n**Predicted Joint Bins:**", pred_bins)
+print("**Mapped Angles (°):**", pred_angles)
 
 # Bar chart visualization
 plt.figure(figsize=(10, 5))
@@ -1564,7 +1564,7 @@ for j, ccc in enumerate(ccc_list):
 pip install torch_geometric
 
 # ===============================
-# ✅ TEST MODEL WITHOUT TRAINING
+# TEST MODEL WITHOUT TRAINING
 # ===============================
 test_loss = 0.0
 test_acc_sum = 0.0
@@ -1591,7 +1591,7 @@ with torch.no_grad():
 test_loss /= total_samples
 test_acc = test_acc_sum / total_samples
 
-print(f"\n✅ Model Retest Results:")
+print(f"\nModel Retest Results:")
 print(f"Test Loss: {test_loss:.4f}")
 print(f"Test Accuracy: {test_acc:.2f}%")
 
@@ -1617,7 +1617,7 @@ test_angles = test_angles.cpu().numpy()
 predicted_angles = predicted_angles.cpu().numpy()
 
 # ===============================
-# ✅ PLOT PREDICTED VS ACTUAL ANGLES (BAR CHARTS)
+# PLOT PREDICTED VS ACTUAL ANGLES (BAR CHARTS)
 # ===============================
 for i in range(num_samples):
     fig, ax = plt.subplots(figsize=(10, 5))
@@ -1645,13 +1645,13 @@ from PIL import Image
 import matplotlib.pyplot as plt
 
 # ===============================
-# ✅ HAND SEGMENTATION FUNCTION (APPLIED TO UPLOADED IMAGES)
+# HAND SEGMENTATION FUNCTION (APPLIED TO UPLOADED IMAGES)
 # ===============================
 def extract_hand_region(segmented_image_path):
     """Extracts only the hand region from a segmented image using HSV thresholding."""
     image = cv2.imread(segmented_image_path)
     if image is None:
-        print(f"❌ Warning: Could not read {segmented_image_path}")
+        print(f"Warning: Could not read {segmented_image_path}")
         return np.zeros((224, 224, 3), dtype=np.uint8), np.zeros((224, 224), dtype=np.uint8)
 
     image_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -1669,7 +1669,7 @@ def extract_hand_region(segmented_image_path):
     return hand_extracted, hand_mask
 
 # ===============================
-# ✅ APPLY PREPROCESSING TO UPLOADED IMAGES
+# APPLY PREPROCESSING TO UPLOADED IMAGES
 # ===============================
 # Define image paths (replace with actual paths)
 image_paths = [
@@ -1699,7 +1699,7 @@ for img_path in image_paths:
 input_tensor = torch.cat(processed_images, dim=0).unsqueeze(0)  # Shape: (1, 9, 224, 224)
 
 # ===============================
-# ✅ DISPLAY SEGMENTED HAND REGIONS
+# DISPLAY SEGMENTED HAND REGIONS
 # ===============================
 fig, axes = plt.subplots(2, 3, figsize=(12, 6))
 
@@ -1721,12 +1721,12 @@ plt.tight_layout()
 plt.show()
 
 # ===============================
-# ✅ CHECK SHAPE CONSISTENCY
+# CHECK SHAPE CONSISTENCY
 # ===============================
 print("Input Tensor Shape (should be [1, 9, 224, 224]):", input_tensor.shape)
 
 # ===============================
-# ✅ CHECK VALUE RANGE
+# CHECK VALUE RANGE
 # ===============================
 for i, img in enumerate(processed_images):
     print(f"Image {titles[i]} - Min: {img.min().item()}, Max: {img.max().item()}")
@@ -1761,7 +1761,7 @@ for img_path in image_paths:
     # Load the image (which is stored in HSV format)
     hsv_image = cv2.imread(img_path)
     if hsv_image is None:
-        print(f"❌ Warning: Could not load image at {img_path}")
+        print(f"Warning: Could not load image at {img_path}")
         continue
     # Convert the HSV image (stored in OpenCV format) back to RGB.
     rgb_image = cv2.cvtColor(hsv_image, cv2.COLOR_HSV2RGB)
@@ -1830,7 +1830,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # ===============================
-# ✅ CONFIGURATION
+# CONFIGURATION
 # ===============================
 DATASET_PATH = "/content/gesture_dataset"
 BATCH_SIZE = 64
@@ -1843,7 +1843,7 @@ SEGMENTED_CACHE_FILE = "cached_gesture_data.pt"
 RGB_CACHE_FILE = "cached_rgb_data.pt"
 
 # ===============================
-# ✅ RGB DATASET DEFINITION (For Student Model)
+# RGB DATASET DEFINITION (For Student Model)
 # ===============================
 class RGBGestureDataset(Dataset):
     """
@@ -1854,13 +1854,13 @@ class RGBGestureDataset(Dataset):
         self.transform = transform
         self.data = []
 
-        print("📂 Loading RGB dataset (raw images)...")
+        print("Loading RGB dataset (raw images)...")
 
         gesture_folders = sorted(glob.glob(os.path.join(dataset_path, "gesture_*")))
         for gesture_folder in gesture_folders:
             angles_csv = os.path.join(gesture_folder, "angles.csv")
             if not os.path.exists(angles_csv):
-                print(f"⚠️ Skipping {gesture_folder} (No angles.csv found)")
+                print(f"Skipping {gesture_folder} (No angles.csv found)")
                 continue
 
             df = pd.read_csv(angles_csv)
@@ -1876,7 +1876,7 @@ class RGBGestureDataset(Dataset):
                 if os.path.exists(front_rgb) and os.path.exists(right_rgb) and os.path.exists(left_rgb):
                     self.data.append((front_rgb, right_rgb, left_rgb, joint_angles))
 
-        print(f"✅ RGB Dataset Loaded: {len(self.data)} samples found")
+        print(f"RGB Dataset Loaded: {len(self.data)} samples found")
 
     def __len__(self):
         return len(self.data)
@@ -1899,7 +1899,7 @@ class RGBGestureDataset(Dataset):
         return images, torch.tensor(joint_angles, dtype=torch.float32)
 
 # ===============================
-# ✅ DATA TRANSFORMATIONS
+# DATA TRANSFORMATIONS
 # ===============================
 transform = transforms.Compose([
     transforms.Resize(IMAGE_SIZE),
@@ -1911,7 +1911,7 @@ transform = transforms.Compose([
 rgb_dataset = RGBGestureDataset(DATASET_PATH, transform)
 
 # ===============================
-# ✅ PREPROCESS & CACHE THE RGB DATA
+# PREPROCESS & CACHE THE RGB DATA
 # ===============================
 if os.path.exists(RGB_CACHE_FILE):
     print(f"Loading cached RGB data from {RGB_CACHE_FILE}...")
@@ -1923,10 +1923,10 @@ else:
         sample = rgb_dataset[i]
         cached_rgb_data.append(sample)
     torch.save(cached_rgb_data, RGB_CACHE_FILE)
-    print(f"✅ Cached RGB preprocessed data to {RGB_CACHE_FILE}")
+    print(f"Cached RGB preprocessed data to {RGB_CACHE_FILE}")
 
 # ===============================
-# ✅ CACHED DATASET DEFINITION (RGB)
+# CACHED DATASET DEFINITION (RGB)
 # ===============================
 class CachedRGBGestureDataset(Dataset):
     def __init__(self, data):
@@ -1941,26 +1941,26 @@ class CachedRGBGestureDataset(Dataset):
 cached_rgb_dataset = CachedRGBGestureDataset(cached_rgb_data)
 
 # ===============================
-# ✅ SPLITTING THE CACHED RGB DATASET
+# SPLITTING THE CACHED RGB DATASET
 # ===============================
 train_size = int(0.8 * len(cached_rgb_dataset))
 val_size = int(0.1 * len(cached_rgb_dataset))
 test_size = len(cached_rgb_dataset) - train_size - val_size
 train_rgb_dataset, val_rgb_dataset, test_rgb_dataset = random_split(cached_rgb_dataset, [train_size, val_size, test_size])
 
-print(f"🔹 Cached RGB Train Set: {len(train_rgb_dataset)} samples")
-print(f"🔹 Cached RGB Validation Set: {len(val_rgb_dataset)} samples")
-print(f"🔹 Cached RGB Test Set: {len(test_rgb_dataset)} samples")
+print(f"Cached RGB Train Set: {len(train_rgb_dataset)} samples")
+print(f"Cached RGB Validation Set: {len(val_rgb_dataset)} samples")
+print(f"Cached RGB Test Set: {len(test_rgb_dataset)} samples")
 
 # ===============================
-# ✅ CREATING DATALOADERS FROM THE CACHED RGB DATASET
+# CREATING DATALOADERS FROM THE CACHED RGB DATASET
 # ===============================
 train_rgb_loader = DataLoader(train_rgb_dataset, batch_size=BATCH_SIZE, shuffle=True)
 val_rgb_loader = DataLoader(val_rgb_dataset, batch_size=BATCH_SIZE, shuffle=False)
 test_rgb_loader = DataLoader(test_rgb_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
 # ===============================
-# ✅ DEBUG: VISUALIZE SAMPLE DATA FROM CACHED RGB DATASET
+# DEBUG: VISUALIZE SAMPLE DATA FROM CACHED RGB DATASET
 # ===============================
 def visualize_samples_rgb(dataset, num_samples=5):
     """
@@ -2019,7 +2019,7 @@ print("Sample image shape:", sample_images.shape)  # Expected: torch.Size([9, 22
 print("Sample joint angles shape:", sample_angles.shape)  # Expected: torch.Size([15])
 
 import torch
-torch.cuda.empty_cache()  # ✅ Frees up cached memory
+torch.cuda.empty_cache()  # Frees up cached memory
 
 import gc
 gc.collect()
