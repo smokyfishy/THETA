@@ -36,8 +36,8 @@ import matplotlib.pyplot as plt
 NUM_IMAGES = 400  # Number of images per camera
 RIGHT_CAM_ID = 2   # Right Webcam index
 LEFT_CAM_ID = 3   # Left Webcam index
-DATASET_PATH = "gesture_dataset"  # Root dataset directory
-CSV_PATH = "Gesture_Angles.csv"  # CSV file containing angles
+DATASET_PATH = "gesture_dataset" # Root dataset directory
+CSV_PATH = "Gesture_Angles.csv" # CSV file containing angles
 
 # === Load Gesture Angles CSV ===
 angles_df = pd.read_csv(CSV_PATH)
@@ -49,7 +49,7 @@ gesture_number = input("Enter Gesture Number: ")
 gesture_row = angles_df[angles_df["Number"] == int(gesture_number)]
 
 if gesture_row.empty:
-    print(f"❌ Gesture {gesture_number} not found in CSV.")
+    print(f"Gesture {gesture_number} not found in CSV.")
     exit()
 
 # Extract only the joint angle columns
@@ -90,9 +90,9 @@ right_cam = cv2.VideoCapture(RIGHT_CAM_ID)
 left_cam = cv2.VideoCapture(LEFT_CAM_ID)
 
 if not right_cam.isOpened():
-    print("❌ Error: Could not open Right Camera.")
+    print("Error: Could not open Right Camera.")
 if not left_cam.isOpened():
-    print("❌ Error: Could not open Left Camera.")
+    print("Error: Could not open Left Camera.")
 
 # === Start Countdown ===
 for i in range(5, 0, -1):
@@ -106,7 +106,7 @@ for i in range(NUM_IMAGES):
     frames = pipeline.wait_for_frames()
     color_frame = frames.get_color_frame()
     if not color_frame:
-        print("❌ Error: Could not get RealSense RGB frame.")
+        print("Error: Could not get RealSense RGB frame.")
         continue
     depth_img = np.asanyarray(color_frame.get_data())  # Convert to NumPy array
 
@@ -115,7 +115,7 @@ for i in range(NUM_IMAGES):
     ret_left, left_img = left_cam.read()
 
     if not ret_right or not ret_left:
-        print("❌ Error: Could not get frames from webcams.")
+        print("Error: Could not get frames from webcams.")
         continue
 
     for cam, img, suffix in [("front", depth_img, "front"), ("right", right_img, "right"), ("left", left_img, "left")]:
@@ -129,18 +129,18 @@ for i in range(NUM_IMAGES):
     new_angle_row = pd.DataFrame([[i] + frame_angles], columns=["Frame"] + ANGLE_COLUMNS)
     angles_df = pd.concat([angles_df, new_angle_row], ignore_index=True)
 
-    print(f" Collected Frame {i+1}/{NUM_IMAGES}")
+    print(f"Collected Frame {i+1}/{NUM_IMAGES}")
 
 # === Save CSV Files ===
 angles_df.to_csv(angles_csv_path, index=False)
-print(f" Angles data saved to {angles_csv_path}")
+print(f"Angles data saved to {angles_csv_path}")
 
 # === Cleanup Camera Resources ===
 pipeline.stop()
 right_cam.release()
 left_cam.release()
 cv2.destroyAllWindows()
-print(" Data Collection Complete! Moving to Segmentation...")
+print("Data Collection Complete! Moving to Segmentation...")
 
 class HandSegModel(pl.LightningModule):
     """
@@ -265,9 +265,9 @@ model = HandSegModel(in_channels=3)
 model.load_state_dict(state_dict, strict=False)
 model.eval()
 
-print(" Model loaded successfully!")
+print("Model loaded successfully!")
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda"if torch.cuda.is_available() else "cpu")
 model.to(device)  #  Move model to GPU
 
 
@@ -311,10 +311,10 @@ def segment_and_save(image_path, output_path):
         cv2.imwrite(output_path, overlayed_image)
 
 
-        print(f" Processed & Saved: {output_path}")
+        print(f"Processed & Saved: {output_path}")
     
     except Exception as e:
-        print(f"❌ Error processing {image_path}: {e}")
+        print(f"Error processing {image_path}: {e}")
 
 # === Run Segmentation on All Collected Images ===
 for i in range(NUM_IMAGES):
@@ -325,4 +325,4 @@ for i in range(NUM_IMAGES):
         # Run segmentation and save
         segment_and_save(raw_image_path, segmented_image_path)
 
-print(" All images segmented and saved!")
+print("All images segmented and saved!")
