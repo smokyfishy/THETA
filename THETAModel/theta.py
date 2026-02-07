@@ -22,10 +22,10 @@ import os
 import zipfile
 
 # Define paths
-ZIP_PATH = "/content/gesture_dataset.zip"  # Ensure this matches the file's actual location
-EXTRACT_PATH = "/content/gesture_dataset"  # Folder where dataset will be extracted
+ZIP_PATH = "/content/gesture_dataset.zip"  
+EXTRACT_PATH = "/content/gesture_dataset"  
 
-# Unzip the file
+
 if os.path.exists(ZIP_PATH):
     with zipfile.ZipFile(ZIP_PATH, 'r') as zip_ref:
         zip_ref.extractall(EXTRACT_PATH)
@@ -37,14 +37,14 @@ from google.colab import drive
 import os
 import zipfile
 
-# MOUNT GOOGLE DRIVE
+
 drive.mount('/content/drive')
 
-# SET FILE PATHS
+
 zip_path = "/content/drive/MyDrive/DexhandData/gesture_dataset.zip"
 extract_path = "/content/gesture_dataset/gesture_dataset"
 
-# CHECK IF ALREADY EXTRACTED
+
 if not os.path.exists(extract_path):
     print("Extracting dataset...")
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
@@ -53,7 +53,7 @@ if not os.path.exists(extract_path):
 else:
     print("Dataset already extracted.")
 
-# === IMPORT LIBRARIES ===
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -76,19 +76,15 @@ import glob
 import matplotlib.pyplot as plt
 from torch.utils.data import Dataset, DataLoader, random_split
 
-# ===============================
-# CONFIGURATION
-# ===============================
+
 DATASET_PATH = "/content/gesture_dataset"
 BATCH_SIZE = 64
 IMAGE_SIZE = (224, 224)
 NUM_JOINTS = 15
-NUM_BINS = 10         # Discrete bins: 90°, 100°, ... 180°
+NUM_BINS = 10         
 CACHE_FILE = "cached_gesture_data.pt"
 
-# -------------------------------
-# Helper function: Round angles & Assign Bins
-# -------------------------------
+
 def process_angles(angles, num_bins=10):
     """
     1. Round each joint angle to the nearest 10 degrees.
@@ -101,9 +97,7 @@ def process_angles(angles, num_bins=10):
     bin_indices = np.clip(bin_indices, 0, num_bins - 1)
     return rounded_angles, bin_indices
 
-# ===============================
-# HAND SEGMENTATION FUNCTION
-# ===============================
+
 def extract_hand_region(segmented_image_path):
     """Extracts only the hand region from a segmented image using HSV thresholding."""
     image = cv2.imread(segmented_image_path)
@@ -121,9 +115,7 @@ def extract_hand_region(segmented_image_path):
     hand_extracted = cv2.bitwise_and(image, image, mask=hand_mask)
     return hand_extracted, hand_mask
 
-# ===============================
-# ORIGINAL DATASET DEFINITION
-# ===============================
+
 class GestureDataset(Dataset):
     def __init__(self, dataset_path, transform=None, num_bins=10):
         self.dataset_path = dataset_path
@@ -179,9 +171,6 @@ class GestureDataset(Dataset):
         images = torch.cat([hand_front, hand_right, hand_left], dim=0)  # Shape: [9, 224, 224]
         return images, torch.tensor(rounded_angles, dtype=torch.float32), torch.tensor(joint_angle_bins, dtype=torch.long)
 
-# ===============================
-# DATA TRANSFORMATIONS
-# ===============================
 transform = transforms.Compose([
     transforms.Resize(IMAGE_SIZE),
     transforms.ToTensor(),
@@ -191,9 +180,7 @@ transform = transforms.Compose([
 # Create the original dataset
 dataset = GestureDataset(DATASET_PATH, transform, num_bins=NUM_BINS)
 
-# ===============================
-# VISUALIZATION FUNCTION
-# ===============================
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -245,13 +232,7 @@ visualize_samples(dataset, num_samples=5)
 
 from torch.utils.data import DataLoader, random_split
 
-# Assume CACHE_FILE and CachedGestureDataset are defined from previous caching code:
-# For example:
-# CACHE_FILE = "cached_gesture_data.pt"
-# cached_data = torch.load(CACHE_FILE)
-# cached_dataset = CachedGestureDataset(cached_data)
 
-# Split the cached dataset: 80% train, 10% validation, 10% test
 total_samples = len(cached_dataset)
 train_size = int(0.8 * total_samples)
 val_size = int(0.1 * total_samples)
@@ -263,20 +244,20 @@ print(f"Cached Train Set: {len(train_dataset)} samples")
 print(f"Cached Validation Set: {len(val_dataset)} samples")
 print(f"Cached Test Set: {len(test_dataset)} samples")
 
-# Create DataLoaders without re-running the segmentation
+
 train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
-# Fetch one sample from the cached dataset
+
 sample_images, sample_angles = cached_dataset[0]
 
-print("Sample image shape:", sample_images.shape)  # Expected: torch.Size([9, 224, 224])
-print("Sample joint angles shape:", sample_angles.shape)  # Expected: torch.Size([15])
+print("Sample image shape:", sample_images.shape)  
+print("Sample joint angles shape:", sample_angles.shape)  
 
 pip install timm
 
-# Check GPU and RAM availability
+
 gpu_info = !nvidia-smi
 gpu_info = '\n'.join(gpu_info)
 if gpu_info.find('failed') >= 0:
@@ -292,9 +273,7 @@ if ram_gb < 20:
 else:
     print('You are using a high-RAM runtime!')
 
-# =============================================================================
-# MODEL TRAINING CODE USING MOBILENETV2 (Lightweight for Hands)
-# =============================================================================
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -302,20 +281,16 @@ from torch.utils.data import DataLoader, random_split
 import timm  # For pretrained models
 import os
 
-# ===============================
-# CONFIGURATION
-# ===============================
+
 BATCH_SIZE = 256
-ACCURACY_THRESHOLD = 5  # ±5° threshold
+ACCURACY_THRESHOLD = 5  
 NUM_JOINTS = 15
 NUM_EPOCHS = 50
 LR = 0.001
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# ===============================
-# MOBILENETV2 MODEL DEFINITION FOR HAND POSE
-# ===============================
+
 class MobileNetV2HandRegressor(nn.Module):
     """
     Uses a pretrained MobileNetV2 from timm, modified to accept 9 input channels
@@ -324,18 +299,16 @@ class MobileNetV2HandRegressor(nn.Module):
     def __init__(self, num_joints=15):
         super().__init__()
         self.model = timm.create_model(
-            "mobilenetv2_100",      # You can experiment with other variants
+            "mobilenetv2_100",     
             pretrained=True,
-            in_chans=9,             # 9 channels: 3 views × 3 channels each
-            num_classes=num_joints  # Final output: 15 joint angles
+            in_chans=9,            
+            num_classes=num_joints  
         )
 
     def forward(self, x):
         return self.model(x)
 
-# ===============================
-# ACCURACY FUNCTION
-# ===============================
+
 def compute_accuracy(preds, targets, threshold=ACCURACY_THRESHOLD):
     """
     Percentage of predicted joint angles within ±threshold of ground truth.
@@ -344,11 +317,7 @@ def compute_accuracy(preds, targets, threshold=ACCURACY_THRESHOLD):
     within_thresh = (torch.abs(preds - targets) < threshold).float()
     return (within_thresh.mean() * 100).item()
 
-# ===============================
-# DATASET & DATALOADERS
-# ===============================
-# Assuming 'cached_dataset' is already loaded (with preprocessed 9-channel images and 15 joint angles)
-# For example, your cached_dataset might be a Torch dataset instance you created earlier.
+
 total_samples = len(cached_dataset)
 train_size = int(0.8 * total_samples)
 val_size = int(0.1 * total_samples)
@@ -363,14 +332,12 @@ train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
-# ===============================
-# TRAINING LOOP (MODIFIED TO SHOW PREDICTIONS)
-# ===============================
+
 model = MobileNetV2HandRegressor(num_joints=NUM_JOINTS).to(device)
 criterion = nn.MSELoss()
 optimizer = optim.Adam(model.parameters(), lr=LR)
 
-# For demonstration, we track one validation batch per training batch
+
 val_iter = iter(val_loader)
 
 for epoch in range(NUM_EPOCHS):
@@ -388,7 +355,7 @@ for epoch in range(NUM_EPOCHS):
         train_loss = loss.item()
         train_acc = compute_accuracy(outputs, angles)
 
-        # Get one batch from validation
+       
         try:
             val_images, val_angles = next(val_iter)
         except StopIteration:
@@ -401,8 +368,8 @@ for epoch in range(NUM_EPOCHS):
             val_loss = criterion(val_outputs, val_angles).item()
             val_acc = compute_accuracy(val_outputs, val_angles)
 
-        # Select one sample from validation batch
-        sample_idx = 0  # Pick the first sample in the batch
+        
+        sample_idx = 0  
         predicted_angles = val_outputs[sample_idx].cpu().numpy()
         actual_angles = val_angles[sample_idx].cpu().numpy()
 
@@ -413,12 +380,10 @@ for epoch in range(NUM_EPOCHS):
         print("Example Prediction vs. Actual Angles (Validation Set):")
         print(f"Predicted Angles: {predicted_angles}")
         print(f"Actual Angles:    {actual_angles}")
-        print("-" * 80)  # Separator for readability
+        print("-" * 80)  
 
 
-# ===============================
-# TEST EVALUATION
-# ===============================
+
 model.eval()
 test_loss = 0.0
 test_acc_sum = 0.0
@@ -438,11 +403,9 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, random_split
 import numpy as np
 import random
-import timm  # Pretrained models
+import timm  
 
-# ===============================
-# CONFIGURATION
-# ===============================
+
 BATCH_SIZE = 256
 NUM_EPOCHS = 10
 LEARNING_RATE = 0.001
@@ -452,20 +415,16 @@ TEMPERATURE = 2.0  # Temperature scaling
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
-# ===============================
-# CLASS WEIGHTING TO HANDLE IMBALANCE
-# ===============================
-# Compute class weights based on dataset bin frequencies using the base_dataset
+
+
 bin_counts = torch.zeros(NUM_BINS)
 for _, _, bins in dataset:
     bin_counts += torch.bincount(bins, minlength=NUM_BINS)
 
-bin_weights = 1.0 / (bin_counts + 1e-6)  # Avoid division by zero
-bin_weights = bin_weights / bin_weights.sum()  # Normalize
+bin_weights = 1.0 / (bin_counts + 1e-6)  
+bin_weights = bin_weights / bin_weights.sum() 
 
-# ===============================
-# MOBILENETV2-BASED CLASSIFICATION MODEL
-# ===============================
+
 class MobileNetV2HandClassifier(nn.Module):
     """
     MobileNetV2-based model for classifying hand joint angles.
@@ -485,9 +444,7 @@ class MobileNetV2HandClassifier(nn.Module):
         out = out.view(-1, self.num_joints, self.num_bins)  # reshape to (batch, 15, 10)
         return out / self.temperature  # Apply temperature scaling
 
-# ===============================
-# FOCAL LOSS FOR IMBALANCED LEARNING
-# ===============================
+
 class FocalLoss(nn.Module):
     def __init__(self, gamma=2, alpha=bin_weights.to(device)):
         super(FocalLoss, self).__init__()
@@ -500,9 +457,7 @@ class FocalLoss(nn.Module):
         loss = (1 - p_t) ** self.gamma * ce_loss
         return loss.mean()
 
-# ===============================
-# DATASET & DATALOADERS
-# ===============================
+
 train_size = int(0.8 * len(dataset))
 val_size = int(0.1 * len(dataset))
 test_size = len(dataset) - train_size - val_size
@@ -516,16 +471,12 @@ print(f"Train Set: {len(train_dataset)} samples")
 print(f"Validation Set: {len(val_dataset)} samples")
 print(f"Test Set: {len(test_dataset)} samples")
 
-# ===============================
-# MODEL INITIALIZATION
-# ===============================
+
 model = MobileNetV2HandClassifier().to(device)
-criterion = FocalLoss()  # Replaces default CrossEntropyLoss
+criterion = FocalLoss()  
 optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
-# ===============================
-# ACCURACY FUNCTION
-# ===============================
+
 def compute_classification_accuracy(preds, targets):
     """
     Computes classification accuracy per joint.
@@ -533,21 +484,17 @@ def compute_classification_accuracy(preds, targets):
     targets: tensor of shape [batch, 15] (class labels, 0-9)
     Returns overall accuracy as percentage.
     """
-    pred_classes = torch.argmax(preds, dim=2)  # shape: [batch, 15]
+    pred_classes = torch.argmax(preds, dim=2) 
     correct = (pred_classes == targets).float()
-    return correct.mean().item() * 100  # Convert to percentage
+    return correct.mean().item() * 100 
 
-# ===============================
-# Initialize lists for per-batch metrics
-# ===============================
+
 train_losses = []
 train_accs = []
 val_losses = []
 val_accs = []
 
-# ===============================
-# TRAINING LOOP
-# ===============================
+
 val_iter = iter(val_loader)
 
 for epoch in range(NUM_EPOCHS):
@@ -558,7 +505,7 @@ for epoch in range(NUM_EPOCHS):
         images, angle_classes = images.to(device), angle_classes.to(device).long()
 
         optimizer.zero_grad()
-        logits = model(images)  # Shape: [batch, 15, 10]
+        logits = model(images)  
         loss = criterion(logits.view(-1, NUM_BINS), angle_classes.view(-1))
         loss.backward()
         optimizer.step()
@@ -566,13 +513,11 @@ for epoch in range(NUM_EPOCHS):
         train_acc = compute_classification_accuracy(logits, angle_classes)
         print(f"Batch {batch_idx+1}: Train Loss: {loss.item():.4f}, Train Acc: {train_acc:.2f}%")
 
-        # Save training metrics
+     
         train_losses.append(loss.item())
         train_accs.append(train_acc)
 
-        # ===============================
-        # VALIDATION (PER BATCH)
-        # ===============================
+     
         try:
             val_images, _, val_angle_classes = next(val_iter)
         except StopIteration:
@@ -588,13 +533,11 @@ for epoch in range(NUM_EPOCHS):
 
         print(f"🔵 Validation Batch {batch_idx+1}: Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.2f}%")
 
-        # Save validation metrics
+        
         val_losses.append(val_loss)
         val_accs.append(val_acc)
 
-        # ===============================
-        # SAMPLE PREDICTION DISPLAY
-        # ===============================
+        
         sample_idx = random.randint(0, val_images.shape[0] - 1)
         pred_classes = torch.argmax(val_logits[sample_idx], dim=1).cpu().numpy()
         actual_classes = val_angle_classes[sample_idx].cpu().numpy()
@@ -604,9 +547,7 @@ for epoch in range(NUM_EPOCHS):
         print(f"   Actual Bins:    {actual_classes}")
         print("-" * 80)
 
-# ===============================
-# TEST EVALUATION
-# ===============================
+
 model.eval()
 test_loss = 0.0
 test_acc_sum = 0.0
@@ -640,14 +581,14 @@ print(f"\nFinal Test Results: Loss = {test_loss:.4f}, Accuracy = {test_acc:.2f}%
 
 import torch
 
-# Define the path to save the model
+
 model_save_path = "mobilenetv2_hand_pose_classification.pth"
 
-# Save the trained model
+
 torch.save(model.state_dict(), model_save_path)
 print(f"Model saved to {model_save_path}")
 
-# Provide a link for download (for Colab users)
+
 try:
     from google.colab import files
     files.download(model_save_path)
@@ -664,43 +605,33 @@ import numpy as np
 import torch
 from sklearn.metrics import roc_auc_score
 import torch.nn.functional as F
-import seaborn as sns  # optional, if needed for other purposes
+import seaborn as sns 
 
-# Check if 'seaborn-whitegrid' is available, else use 'ggplot'
+
 if 'seaborn-whitegrid' in plt.style.available:
     plt.style.use('seaborn-whitegrid')
 else:
     plt.style.use('ggplot')
 
-plt.rc('font', family='serif', size=12)  # Using 'serif' as a fallback for Times New Roman
+plt.rc('font', family='serif', size=12)  
 plt.rc('axes', titlesize=14, labelsize=12)
 plt.rc('xtick', labelsize=10)
 plt.rc('ytick', labelsize=10)
 plt.rc('legend', fontsize=10)
 
-# -------------------------------
-# Helper functions for metrics
-# -------------------------------
+
 def compute_rmse(pred_angles, true_angles):
-    """
-    Compute RMSE between predicted and true continuous angles.
-    Both inputs should be tensors of shape [batch, num_joints].
-    """
+    
     return torch.sqrt(torch.mean((pred_angles.float() - true_angles) ** 2)).item()
 
 def compute_roc_auc(probs, targets):
-    """
-    Computes ROC-AUC score averaged over joints.
-    probs: tensor of shape [batch, num_joints, num_bins] (softmax probabilities)
-    targets: tensor of shape [batch, num_joints] (class labels)
-    Returns the average ROC-AUC over joints.
-    """
+    
     batch_size, num_joints, num_bins = probs.shape
     roc_auc_list = []
     probs_np = probs.cpu().numpy()
     targets_np = targets.cpu().numpy()
     for j in range(num_joints):
-        # Skip joint if only one class is present in ground truth
+        
         if len(np.unique(targets_np[:, j])) < 2:
             continue
         try:
@@ -716,13 +647,7 @@ def compute_roc_auc(probs, targets):
         return float('nan')
 
 def evaluate_loader(loader, model, criterion, num_bins=NUM_BINS):
-    """
-    Evaluates the model on a given DataLoader.
-    Returns lists of batch losses, accuracies, RMSEs, and ROC-AUC scores.
-    Assumes the loader returns (images, continuous_angles, class_labels),
-    where continuous_angles are the rounded angles (e.g., multiples of 10)
-    and class_labels are the discrete bins.
-    """
+    
     model.eval()
     batch_losses = []
     batch_accs = []
@@ -739,29 +664,24 @@ def evaluate_loader(loader, model, criterion, num_bins=NUM_BINS):
             loss = criterion(logits.view(-1, num_bins), gt_classes.view(-1))
             batch_losses.append(loss.item())
 
-            # Accuracy computation
+            
             pred_classes = torch.argmax(logits, dim=2)  # [batch, 15]
             acc = (pred_classes == gt_classes).float().mean().item() * 100
             batch_accs.append(acc)
 
-            # RMSE: convert predicted classes to angles (90 + class * 10)
+            
             pred_angles = 90 + pred_classes * 10
             rmse = compute_rmse(pred_angles, gt_angles)
             batch_rmse.append(rmse)
 
-            # ROC-AUC: using softmax probabilities
+           
             probs = torch.softmax(logits, dim=2)
             roc_auc = compute_roc_auc(probs, gt_classes)
             batch_roc_auc.append(roc_auc)
 
     return batch_losses, batch_accs, batch_rmse, batch_roc_auc
 
-# -------------------------------
-# Plot separate graphs for each metric using saved logs
-# -------------------------------
-# (Assuming train_losses, train_accs, val_losses, and val_accs were saved during training)
 
-# Plot Train Loss vs. Batch Number
 plt.figure(figsize=(6, 4), dpi=300)
 plt.plot(train_losses, 'o-', color='blue', linewidth=2, markersize=5)
 plt.xlabel('Batch Number')
@@ -771,7 +691,7 @@ plt.tight_layout()
 plt.savefig("train_loss.png", dpi=300)
 plt.show()
 
-# Plot Train Accuracy vs. Batch Number
+
 plt.figure(figsize=(6, 4), dpi=300)
 plt.plot(train_accs, 's-', color='green', linewidth=2, markersize=5)
 plt.xlabel('Batch Number')
@@ -781,7 +701,7 @@ plt.tight_layout()
 plt.savefig("train_accuracy.png", dpi=300)
 plt.show()
 
-# Plot Validation Loss vs. Batch Number
+
 plt.figure(figsize=(6, 4), dpi=300)
 plt.plot(val_losses, '^-', color='red', linewidth=2, markersize=5)
 plt.xlabel('Batch Number')
@@ -791,7 +711,7 @@ plt.tight_layout()
 plt.savefig("val_loss.png", dpi=300)
 plt.show()
 
-# Plot Validation Accuracy vs. Batch Number
+
 plt.figure(figsize=(6, 4), dpi=300)
 plt.plot(val_accs, 'd-', color='purple', linewidth=2, markersize=5)
 plt.xlabel('Batch Number')
@@ -801,12 +721,10 @@ plt.tight_layout()
 plt.savefig("val_accuracy.png", dpi=300)
 plt.show()
 
-# -------------------------------
-# Evaluate the model on the test set and compute overall metrics
-# -------------------------------
+
 test_losses, test_accs, test_rmses, test_roc_aucs = evaluate_loader(test_loader, model, criterion)
 
-# Plot Test Loss vs. Batch Number
+
 plt.figure(figsize=(6, 4), dpi=300)
 plt.plot(test_losses, 'o-', color='darkred', linewidth=2, markersize=5)
 plt.xlabel('Test Batch Number')
@@ -816,7 +734,7 @@ plt.tight_layout()
 plt.savefig("test_loss.png", dpi=300)
 plt.show()
 
-# Plot Test Accuracy vs. Batch Number
+
 plt.figure(figsize=(6, 4), dpi=300)
 plt.plot(test_accs, 's-', color='darkblue', linewidth=2, markersize=5)
 plt.xlabel('Test Batch Number')
@@ -826,7 +744,7 @@ plt.tight_layout()
 plt.savefig("test_accuracy.png", dpi=300)
 plt.show()
 
-# Plot Test RMSE vs. Batch Number
+
 plt.figure(figsize=(6, 4), dpi=300)
 plt.plot(test_rmses, '^-', color='darkorange', linewidth=2, markersize=5)
 plt.xlabel('Test Batch Number')
@@ -836,7 +754,7 @@ plt.tight_layout()
 plt.savefig("test_rmse.png", dpi=300)
 plt.show()
 
-# Plot Test ROC-AUC vs. Batch Number
+
 plt.figure(figsize=(6, 4), dpi=300)
 plt.plot(test_roc_aucs, 'd-', color='darkgreen', linewidth=2, markersize=5)
 plt.xlabel('Test Batch Number')
@@ -846,22 +764,18 @@ plt.tight_layout()
 plt.savefig("test_roc_auc.png", dpi=300)
 plt.show()
 
-# -------------------------------
-# Print overall test metrics
-# -------------------------------
+
 final_test_loss = np.mean(test_losses)
 final_test_acc = np.mean(test_accs)
 final_test_rmse = np.mean(test_rmses)
-final_test_roc_auc = np.nanmean(test_roc_aucs)  # nanmean to ignore any NaN values
+final_test_roc_auc = np.nanmean(test_roc_aucs)  
 
 print(f"Final Test Loss: {final_test_loss:.4f}")
 print(f"Final Test Accuracy: {final_test_acc:.2f}%")
 print(f"Final Test RMSE: {final_test_rmse:.4f}")
 print(f"Final Test ROC-AUC: {final_test_roc_auc:.4f}")
 
-# -------------------------------
-# Additionally, compute and print per-joint ROC-AUC averaged across batches
-# -------------------------------
+
 def evaluate_loader_per_joint(loader, model, criterion, num_bins=NUM_BINS):
     model.eval()
     batch_roc_auc_per_joint = []
@@ -871,7 +785,7 @@ def evaluate_loader_per_joint(loader, model, criterion, num_bins=NUM_BINS):
             gt_classes = class_labels.to(device).long()  # shape: [batch, 15]
             logits = model(images)  # shape: [batch, 15, 10]
             probs = torch.softmax(logits, dim=2)
-            # Compute per-joint ROC-AUC for this batch
+            
             joint_auc = {}
             batch_size, num_joints, _ = probs.shape
             probs_np = probs.cpu().numpy()
@@ -915,37 +829,27 @@ import torch
 from sklearn.metrics import roc_auc_score
 import torch.nn.functional as F
 
-# Use a consistent default style and font settings
+
 plt.style.use('default')
-plt.rc('font', family='serif', size=12)  # Using 'serif' as a fallback for Times New Roman
+plt.rc('font', family='serif', size=12)  
 plt.rc('axes', titlesize=14, labelsize=12)
 plt.rc('xtick', labelsize=10)
 plt.rc('ytick', labelsize=10)
 plt.rc('legend', fontsize=10)
 
-# -------------------------------
-# Helper functions for metrics
-# -------------------------------
+
 def compute_rmse(pred_angles, true_angles):
-    """
-    Compute RMSE between predicted and true continuous angles.
-    Both inputs should be tensors of shape [batch, num_joints].
-    """
+    
     return torch.sqrt(torch.mean((pred_angles.float() - true_angles) ** 2)).item()
 
 def compute_roc_auc(probs, targets):
-    """
-    Computes ROC-AUC score averaged over joints.
-    probs: tensor of shape [batch, num_joints, num_bins] (softmax probabilities)
-    targets: tensor of shape [batch, num_joints] (class labels)
-    Returns the average ROC-AUC over joints.
-    """
+    
     batch_size, num_joints, num_bins = probs.shape
     roc_auc_list = []
     probs_np = probs.cpu().numpy()
     targets_np = targets.cpu().numpy()
     for j in range(num_joints):
-        # Skip joint if only one class is present in ground truth
+        
         if len(np.unique(targets_np[:, j])) < 2:
             continue
         try:
@@ -961,11 +865,7 @@ def compute_roc_auc(probs, targets):
         return float('nan')
 
 def evaluate_loader(loader, model, criterion, num_bins=NUM_BINS):
-    """
-    Evaluates the model on a given DataLoader.
-    Returns lists of batch losses, accuracies, RMSEs, and ROC-AUC scores.
-    Assumes the loader returns (images, continuous_angles, class_labels).
-    """
+    
     model.eval()
     batch_losses = []
     batch_accs = []
@@ -982,26 +882,24 @@ def evaluate_loader(loader, model, criterion, num_bins=NUM_BINS):
             loss = criterion(logits.view(-1, num_bins), gt_classes.view(-1))
             batch_losses.append(loss.item())
 
-            # Accuracy computation
+           
             pred_classes = torch.argmax(logits, dim=2)  # [batch, num_joints]
             acc = (pred_classes == gt_classes).float().mean().item() * 100
             batch_accs.append(acc)
 
-            # RMSE: convert predicted classes to angles (90 + class * 10)
+           
             pred_angles = 90 + pred_classes * 10
             rmse = compute_rmse(pred_angles, gt_angles)
             batch_rmse.append(rmse)
 
-            # ROC-AUC: using softmax probabilities
+          
             probs = torch.softmax(logits, dim=2)
             roc_auc = compute_roc_auc(probs, gt_classes)
             batch_roc_auc.append(roc_auc)
 
     return batch_losses, batch_accs, batch_rmse, batch_roc_auc
 
-# -------------------------------
-# Plotting helper function for line graphs
-# -------------------------------
+
 def plot_line_graph(x, y, xlabel, ylabel, title, filename, marker, color):
     fig, ax = plt.subplots(figsize=(7, 5), dpi=300)
     ax.plot(x, y, marker+ '-', color=color, linewidth=2, markersize=5)
@@ -1013,44 +911,39 @@ def plot_line_graph(x, y, xlabel, ylabel, title, filename, marker, color):
     plt.savefig(filename, dpi=300)
     plt.show()
 
-# -------------------------------
-# Plot separate graphs for each metric using saved logs
-# -------------------------------
-# (Assuming train_losses, train_accs, val_losses, and val_accs were saved during training)
+
+
 train_batches = np.arange(len(train_losses))
 val_batches = np.arange(len(val_losses))
 
-# Plot Train Loss vs. Batch Number
+
 plot_line_graph(train_batches, train_losses, 'Batch Number', 'Train Loss',
                 'Train Loss vs. Batch Number', 'train_loss.png', 'o', 'blue')
 
-# Plot Train Accuracy vs. Batch Number
+
 plot_line_graph(train_batches, train_accs, 'Batch Number', 'Train Accuracy (%)',
                 'Train Accuracy vs. Batch Number', 'train_accuracy.png', 's', 'green')
 
-# Plot Validation Loss vs. Batch Number
+
 plot_line_graph(val_batches, val_losses, 'Batch Number', 'Validation Loss',
                 'Validation Loss vs. Batch Number', 'val_loss.png', '^', 'red')
 
-# Plot Validation Accuracy vs. Batch Number
+
 plot_line_graph(val_batches, val_accs, 'Batch Number', 'Validation Accuracy (%)',
                 'Validation Accuracy vs. Batch Number', 'val_accuracy.png', 'd', 'purple')
 
-# -------------------------------
-# Evaluate the model on the test set and compute overall metrics
-# -------------------------------
+
 test_losses, test_accs, test_rmses, test_roc_aucs = evaluate_loader(test_loader, model, criterion)
 test_batches = np.arange(len(test_losses))
 
-# Plot Test Loss vs. Batch Number
+
 plot_line_graph(test_batches, test_losses, 'Test Batch Number', 'Test Loss',
                 'Test Loss vs. Batch Number', 'test_loss.png', 'o', 'darkred')
 
-# Plot Test Accuracy vs. Batch Number
+
 plot_line_graph(test_batches, test_accs, 'Test Batch Number', 'Test Accuracy (%)',
                 'Test Accuracy vs. Batch Number', 'test_accuracy.png', 's', 'darkblue')
 
-# Plot Test RMSE vs. Batch Number
 plot_line_graph(test_batches, test_rmses, 'Test Batch Number', 'Test RMSE (°)',
                 'Test RMSE vs. Batch Number', 'test_rmse.png', '^', 'darkorange')
 
@@ -1058,22 +951,17 @@ plot_line_graph(test_batches, test_rmses, 'Test Batch Number', 'Test RMSE (°)',
 plot_line_graph(test_batches, test_roc_aucs, 'Test Batch Number', 'Test ROC-AUC',
                 'Test ROC-AUC vs. Batch Number', 'test_roc_auc.png', 'd', 'darkgreen')
 
-# -------------------------------
-# Print overall test metrics
-# -------------------------------
+
 final_test_loss = np.mean(test_losses)
 final_test_acc = np.mean(test_accs)
 final_test_rmse = np.mean(test_rmses)
-final_test_roc_auc = np.nanmean(test_roc_aucs)  # Using nanmean to ignore any NaN values
+final_test_roc_auc = np.nanmean(test_roc_aucs)  
 
 print(f"Final Test Loss: {final_test_loss:.4f}")
 print(f"Final Test Accuracy: {final_test_acc:.2f}%")
 print(f"Final Test RMSE: {final_test_rmse:.4f}")
 print(f"Final Test ROC-AUC: {final_test_roc_auc:.4f}")
 
-# -------------------------------
-# Additionally, compute and print per-joint ROC-AUC averaged across batches
-# -------------------------------
 def evaluate_loader_per_joint(loader, model, criterion, num_bins=NUM_BINS):
     model.eval()
     batch_roc_auc_per_joint = []
@@ -1118,7 +1006,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import precision_score, recall_score, f1_score
 
-# Function to compute per-joint predictions and ground-truth labels from a loader
+
 def compute_per_joint_classification_metrics(loader, model, num_joints=15):
     model.eval()
     all_preds = {j: [] for j in range(num_joints)}
@@ -1134,11 +1022,11 @@ def compute_per_joint_classification_metrics(loader, model, num_joints=15):
                 all_targets[j].extend(gt_classes[:, j].cpu().numpy())
     return all_preds, all_targets
 
-# Compute per-joint predictions on the training set
+
 num_joints = NUM_JOINTS  # 15
 test_preds, test_targets = compute_per_joint_classification_metrics(test_loader, model, num_joints)
 
-# Initialize dictionaries to hold metrics per joint
+
 precision_per_joint = {}
 recall_per_joint = {}
 f1_per_joint = {}
@@ -1146,18 +1034,18 @@ f1_per_joint = {}
 for j in range(num_joints):
     preds_j = np.array(test_preds[j])
     targets_j = np.array(test_targets[j])
-    # Compute precision, recall, F1 using macro average (and handle zero division)
+   
     precision_per_joint[j] = precision_score(targets_j, preds_j, average='macro', zero_division=0)
     recall_per_joint[j] = recall_score(targets_j, preds_j, average='macro', zero_division=0)
     f1_per_joint[j] = f1_score(targets_j, preds_j, average='macro', zero_division=0)
 
-# Convert dictionaries to arrays for plotting (sorted by joint index)
+
 joint_indices = np.array(sorted(precision_per_joint.keys()))
 precision_array = np.array([precision_per_joint[j] for j in joint_indices])
 recall_array = np.array([recall_per_joint[j] for j in joint_indices])
 f1_array = np.array([f1_per_joint[j] for j in joint_indices])
 
-# Plot Precision, Recall, and F1 Score as bar graphs
+
 fig, ax = plt.subplots(figsize=(7, 5), dpi=300)
 bar_width = 0.3
 index = np.arange(len(joint_indices))
@@ -1178,7 +1066,7 @@ plt.tight_layout()
 plt.savefig("per_joint_metrics_bar.png", dpi=300)
 plt.show()
 
-# Print overall average metrics across all joints
+
 avg_precision = np.nanmean(precision_array)
 avg_recall = np.nanmean(recall_array)
 avg_f1 = np.nanmean(f1_array)
@@ -1191,18 +1079,18 @@ print(f"Average F1 Score: {avg_f1:.4f}")
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Compute test accuracy per joint (in percent)
+
 accuracy_per_joint = {}
 for j in range(num_joints):
     preds_j = np.array(test_preds[j])
     targets_j = np.array(test_targets[j])
-    accuracy_per_joint[j] = np.mean(preds_j == targets_j) * 100  # Convert to percent
+    accuracy_per_joint[j] = np.mean(preds_j == targets_j) * 100  
 
-# Convert dictionary to array for plotting (sorted by joint index)
+
 joint_indices = np.array(sorted(accuracy_per_joint.keys()))
 accuracy_array = np.array([accuracy_per_joint[j] for j in joint_indices])
 
-# Plot Test Accuracy per Joint as a bar graph
+
 fig, ax = plt.subplots(figsize=(7, 5), dpi=300)
 bar_width = 0.3
 index = np.arange(len(joint_indices))
@@ -1221,7 +1109,7 @@ plt.tight_layout()
 plt.savefig("test_accuracy_per_joint.png", dpi=300)
 plt.show()
 
-# Print overall average test accuracy across all joints (in percent)
+
 avg_accuracy = np.nanmean(accuracy_array)
 print("Overall Test Accuracy per Joint:")
 print(f"Average Accuracy: {avg_accuracy:.4f}%")
@@ -1234,13 +1122,11 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 
-# Define device
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
-# -------------------------------
-# Define the Model Class (must match training)
-# -------------------------------
+
 NUM_JOINTS = 15
 NUM_BINS = 10
 TEMPERATURE = 2.0
@@ -1259,9 +1145,7 @@ class MobileNetV2HandClassifier(nn.Module):
         out = out.view(-1, self.num_joints, self.num_bins)  # reshape to [batch, 15, 10]
         return out / self.temperature  # Temperature scaling
 
-# -------------------------------
-# Load the downloaded model for evaluation
-# -------------------------------
+
 model_save_path = "mobilenetv2_hand_pose_classification.pth"
 model = MobileNetV2HandClassifier().to(device)
 model.load_state_dict(torch.load(model_save_path, map_location=device))
@@ -1272,7 +1156,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 
-# Define a loss function (you can use CrossEntropyLoss or your custom loss)
+
 criterion = nn.CrossEntropyLoss()
 
 def evaluate_model(loader, model, criterion, num_bins=NUM_BINS):
@@ -1281,20 +1165,20 @@ def evaluate_model(loader, model, criterion, num_bins=NUM_BINS):
     with torch.no_grad():
         for images, cont_angles, class_labels in loader:
             images = images.to(device)
-            # Ground truth: use class_labels as the discrete targets
+ 
             gt_classes = class_labels.to(device).long()
 
             logits = model(images)  # Shape: [batch, 15, 10]
             loss = criterion(logits.view(-1, num_bins), gt_classes.view(-1))
             losses.append(loss.item())
 
-            # Compute accuracy per batch
-            pred_classes = torch.argmax(logits, dim=2)  # [batch, 15]
+   
+            pred_classes = torch.argmax(logits, dim=2)  
             acc = (pred_classes == gt_classes).float().mean().item() * 100
             accuracies.append(acc)
     return np.mean(losses), np.mean(accuracies)
 
-# Evaluate the model on the test dataset (assuming test_loader is defined)
+
 test_loss, test_acc = evaluate_model(test_loader, model, criterion)
 print(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_acc:.2f}%")
 
@@ -1307,18 +1191,14 @@ import torchvision.transforms as transforms
 from PIL import Image
 import matplotlib.pyplot as plt
 
-# ===============================
-# CONFIGURATION
-# ===============================
+
 NUM_JOINTS = 15
 NUM_BINS = 10
 IMAGE_SIZE = (224, 224)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
-# ===============================
-# MODEL DEFINITION (SAME AS TRAINING)
-# ===============================
+
 class MobileNetV2HandClassifier(nn.Module):
     def __init__(self, num_joints=NUM_JOINTS, num_bins=NUM_BINS):
         super().__init__()
@@ -1333,16 +1213,12 @@ class MobileNetV2HandClassifier(nn.Module):
         out = out.view(-1, self.num_joints, self.num_bins)  # reshape to (batch, 15, 10)
         return out
 
-# ===============================
-# LOAD TRAINED MODEL
-# ===============================
+
 model = MobileNetV2HandClassifier().to(device)
 model.load_state_dict(torch.load("mobilenetv2_hand_pose_classification.pth", map_location=device))  # Change path if needed
 model.eval()
 
-# ===============================
-# HSV HAND SEGMENTATION FUNCTION
-# ===============================
+
 def extract_hand_region(image_path):
     """Extracts the hand region from a segmented image using HSV thresholding."""
     image = cv2.imread(image_path)
@@ -1352,7 +1228,7 @@ def extract_hand_region(image_path):
 
     image_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
-    # HSV range for hand segmentation (adjust if needed)
+  
     lower_red1 = np.array([0, 120, 70])
     upper_red1 = np.array([10, 255, 255])
     lower_red2 = np.array([170, 120, 70])
@@ -1365,13 +1241,11 @@ def extract_hand_region(image_path):
     hand_extracted = cv2.bitwise_and(image, image, mask=hand_mask)
     return hand_extracted
 
-# ===============================
-# IMAGE PREPROCESSING FUNCTION
-# ===============================
+
 transform = transforms.Compose([
     transforms.Resize(IMAGE_SIZE),
     transforms.ToTensor(),
-    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])  # Normalization
+    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])  
 ])
 
 def preprocess_images(front_path, right_path, left_path, visualize=False):
@@ -1380,21 +1254,21 @@ def preprocess_images(front_path, right_path, left_path, visualize=False):
     right_hand = extract_hand_region(right_path)
     left_hand = extract_hand_region(left_path)
 
-    # Convert to PIL Images
+
     front_hand_pil = Image.fromarray(cv2.cvtColor(front_hand, cv2.COLOR_BGR2RGB))
     right_hand_pil = Image.fromarray(cv2.cvtColor(right_hand, cv2.COLOR_BGR2RGB))
     left_hand_pil = Image.fromarray(cv2.cvtColor(left_hand, cv2.COLOR_BGR2RGB))
 
-    # Apply transformations
+
     front_hand = transform(front_hand_pil)
     right_hand = transform(right_hand_pil)
     left_hand = transform(left_hand_pil)
 
-    # Concatenate into a single 9-channel tensor
+
     input_tensor = torch.cat([front_hand, right_hand, left_hand], dim=0).unsqueeze(0).to(device)  # Shape: [1, 9, 224, 224]
 
     if visualize:
-        # Undo normalization (to visualize correctly) on CPU
+       
         mean = torch.tensor([0.5, 0.5, 0.5]).view(3, 1, 1)
         std = torch.tensor([0.5, 0.5, 0.5]).view(3, 1, 1)
 
@@ -1404,12 +1278,12 @@ def preprocess_images(front_path, right_path, left_path, visualize=False):
         ...
 
 
-        # Convert tensors to NumPy for visualization
+     
         front_img = front_hand_vis.permute(1, 2, 0).cpu().numpy()
         right_img = right_hand_vis.permute(1, 2, 0).cpu().numpy()
         left_img = left_hand_vis.permute(1, 2, 0).cpu().numpy()
 
-        # Display images before they go into the model
+    
         fig, axes = plt.subplots(1, 3, figsize=(12, 4))
         axes[0].imshow(front_img)
         axes[0].set_title("Front View (Preprocessed)")
@@ -1425,9 +1299,7 @@ def preprocess_images(front_path, right_path, left_path, visualize=False):
 
     return input_tensor
 
-# ===============================
-# PREDICTION FUNCTION
-# ===============================
+
 def predict_joint_angles(front_path, right_path, left_path, visualize_preprocessed=True):
     """Predicts joint angles from three segmented images."""
     input_tensor = preprocess_images(front_path, right_path, left_path, visualize=visualize_preprocessed)
@@ -1440,22 +1312,18 @@ def predict_joint_angles(front_path, right_path, left_path, visualize_preprocess
     pred_angles = 90 + pred_classes * 10
     return pred_classes, pred_angles
 
-# ===============================
-# UPLOAD & RUN PREDICTIONS
-# ===============================
+
 front_image_path = "/content/gesture_dataset/gesture_14/frame_000_front_segmented.jpg"
 right_image_path = "/content/gesture_dataset/gesture_14/frame_000_front_segmented.jpg"
 left_image_path = "/content/gesture_dataset/gesture_14/frame_000_front_segmented.jpg"
 
 pred_bins, pred_angles = predict_joint_angles(front_image_path, right_image_path, left_image_path, visualize_preprocessed=True)
 
-# ===============================
-# DISPLAY RESULTS
-# ===============================
+
 print("\n**Predicted Joint Bins:**", pred_bins)
 print("**Mapped Angles (°):**", pred_angles)
 
-# Bar chart visualization
+
 plt.figure(figsize=(10, 5))
 plt.bar(np.arange(NUM_JOINTS) - 0.2, pred_angles, width=0.4, color='blue', label="Predicted Angles (°)")
 plt.bar(np.arange(NUM_JOINTS) + 0.2, pred_bins * 10 + 90, width=0.4, color='red', alpha=0.7, label="Predicted Bins")
@@ -1473,10 +1341,7 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, e
 from scipy.stats import pearsonr
 
 def concordance_correlation_coefficient(y_true, y_pred):
-    """
-    Computes the Concordance Correlation Coefficient (CCC) between two arrays.
-    CCC measures agreement between two variables.
-    """
+    
     mean_true = np.mean(y_true)
     mean_pred = np.mean(y_pred)
     var_true = np.var(y_true)
@@ -1486,13 +1351,10 @@ def concordance_correlation_coefficient(y_true, y_pred):
     return ccc
 
 def compute_regression_metrics(model, test_loader, device, accuracy_threshold=5):
-    """
-    Evaluates the model on the test set and computes a suite of regression metrics.
-    Returns a dictionary of metrics and also the raw predictions and ground truths.
-    """
+    
     all_preds = []
     all_targets = []
-    batch_accuracies = []  # Binary accuracy per batch (each joint's error < threshold)
+    batch_accuracies = []  
 
     model.eval()
     with torch.no_grad():
@@ -1502,14 +1364,14 @@ def compute_regression_metrics(model, test_loader, device, accuracy_threshold=5)
             preds = model(images)
             all_preds.append(preds.cpu().numpy())
             all_targets.append(angles.cpu().numpy())
-            # Calculate binary accuracy: For each sample, count joints with error < threshold.
+            
             batch_acc = (torch.abs(preds - angles) < accuracy_threshold).float().mean().item() * 100
             batch_accuracies.append(batch_acc)
 
-    all_preds = np.concatenate(all_preds, axis=0)  # Shape: (N, NUM_JOINTS)
+    all_preds = np.concatenate(all_preds, axis=0)  
     all_targets = np.concatenate(all_targets, axis=0)
 
-    # Standard regression metrics
+  
     rmse = np.sqrt(mean_squared_error(all_targets, all_preds))
     mae = mean_absolute_error(all_targets, all_preds)
     r2 = r2_score(all_targets, all_preds)
@@ -1519,14 +1381,14 @@ def compute_regression_metrics(model, test_loader, device, accuracy_threshold=5)
 
     num_joints = all_targets.shape[1]
 
-    # Pearson correlation for each joint
+ 
     pearson_list = []
     for j in range(num_joints):
         r, _ = pearsonr(all_targets[:, j], all_preds[:, j])
         pearson_list.append(r)
     avg_pearson = np.mean(pearson_list)
 
-    # Concordance Correlation Coefficient (CCC) for each joint
+   
     ccc_list = []
     for j in range(num_joints):
         ccc = concordance_correlation_coefficient(all_targets[:, j], all_preds[:, j])
@@ -1546,7 +1408,7 @@ def compute_regression_metrics(model, test_loader, device, accuracy_threshold=5)
 
     return metrics, all_preds, all_targets, pearson_list, ccc_list
 
-# Example usage:
+
 metrics, all_preds, all_targets, pearson_list, ccc_list = compute_regression_metrics(model, test_loader, device, accuracy_threshold=ACCURACY_THRESHOLD)
 
 print("=== Detailed Regression Metrics on Test Set ===")
@@ -1563,14 +1425,12 @@ for j, ccc in enumerate(ccc_list):
 
 pip install torch_geometric
 
-# ===============================
-# TEST MODEL WITHOUT TRAINING
-# ===============================
+
 test_loss = 0.0
 test_acc_sum = 0.0
 total_samples = 0
 
-# Set model to evaluation mode
+
 model.eval()
 
 with torch.no_grad():
@@ -1578,16 +1438,15 @@ with torch.no_grad():
         images, angles = images.to(device), angles.to(device)
         outputs = model(images)
 
-        # Compute loss
+ 
         loss = criterion(outputs, angles)
         test_loss += loss.item() * images.size(0)
 
-        # Compute accuracy
+
         batch_acc = compute_accuracy(outputs, angles)
         test_acc_sum += batch_acc * images.size(0)
         total_samples += images.size(0)
 
-# Compute average loss and accuracy
 test_loss /= total_samples
 test_acc = test_acc_sum / total_samples
 
@@ -1598,32 +1457,28 @@ print(f"Test Accuracy: {test_acc:.2f}%")
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Number of test samples to visualize
 num_samples = 5
 
-# Extract the first num_samples from test_loader
+
 test_iter = iter(test_loader)
 test_images, test_angles = next(test_iter)
 
 test_images = test_images[:num_samples].to(device)
 test_angles = test_angles[:num_samples].to(device)
 
-# Make predictions
 with torch.no_grad():
     predicted_angles = model(test_images)
 
-# Convert to CPU for visualization
+
 test_angles = test_angles.cpu().numpy()
 predicted_angles = predicted_angles.cpu().numpy()
 
-# ===============================
-# PLOT PREDICTED VS ACTUAL ANGLES (BAR CHARTS)
-# ===============================
+
 for i in range(num_samples):
     fig, ax = plt.subplots(figsize=(10, 5))
 
     indices = np.arange(NUM_JOINTS)
-    width = 0.35  # Width of the bars
+    width = 0.35  
 
     ax.bar(indices - width/2, test_angles[i], width, label="Actual Angles", alpha=0.7)
     ax.bar(indices + width/2, predicted_angles[i], width, label="Predicted Angles", alpha=0.7)
@@ -1644,11 +1499,9 @@ import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
 
-# ===============================
-# HAND SEGMENTATION FUNCTION (APPLIED TO UPLOADED IMAGES)
-# ===============================
+
 def extract_hand_region(segmented_image_path):
-    """Extracts only the hand region from a segmented image using HSV thresholding."""
+   
     image = cv2.imread(segmented_image_path)
     if image is None:
         print(f"Warning: Could not read {segmented_image_path}")
@@ -1668,10 +1521,7 @@ def extract_hand_region(segmented_image_path):
     hand_extracted = cv2.bitwise_and(image, image, mask=hand_mask)
     return hand_extracted, hand_mask
 
-# ===============================
-# APPLY PREPROCESSING TO UPLOADED IMAGES
-# ===============================
-# Define image paths (replace with actual paths)
+
 image_paths = [
     "/content/frame_013_front_segmented.jpg",  # Front camera view (HSV image)
     "/content/frame_013_left_segmented.jpg",   # Left camera view (HSV image)
@@ -1679,14 +1529,14 @@ image_paths = [
 ]
 
 
-# Define transformation (matching dataset preprocessing)
+
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
 ])
 
-# Apply segmentation and preprocessing to each image
+
 processed_images = []
 segmented_masks = []
 for img_path in image_paths:
@@ -1695,22 +1545,20 @@ for img_path in image_paths:
     processed_images.append(transform(hand_pil))
     segmented_masks.append(hand_mask)
 
-# Concatenate images into a 9-channel tensor
+
 input_tensor = torch.cat(processed_images, dim=0).unsqueeze(0)  # Shape: (1, 9, 224, 224)
 
-# ===============================
-# DISPLAY SEGMENTED HAND REGIONS
-# ===============================
+
 fig, axes = plt.subplots(2, 3, figsize=(12, 6))
 
 titles = ["Front View", "Left View", "Right View"]
 for i in range(3):
-    # Original Segmented Hand
+   
     axes[0, i].imshow(cv2.cvtColor(segmented_masks[i], cv2.COLOR_GRAY2RGB))
     axes[0, i].axis("off")
     axes[0, i].set_title(f"{titles[i]} - Segmentation Mask")
 
-    # Preprocessed Image (De-normalized for visualization)
+    
     img_display = (processed_images[i] * 0.5 + 0.5).permute(1, 2, 0).cpu().numpy()
     axes[1, i].imshow(img_display)
     axes[1, i].axis("off")
@@ -1720,14 +1568,10 @@ plt.suptitle("Segmented and Preprocessed Hand Images")
 plt.tight_layout()
 plt.show()
 
-# ===============================
-# CHECK SHAPE CONSISTENCY
-# ===============================
+
 print("Input Tensor Shape (should be [1, 9, 224, 224]):", input_tensor.shape)
 
-# ===============================
-# CHECK VALUE RANGE
-# ===============================
+
 for i, img in enumerate(processed_images):
     print(f"Image {titles[i]} - Min: {img.min().item()}, Max: {img.max().item()}")
 
@@ -1738,18 +1582,14 @@ import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
 
-# ===============================
-# LOAD HSV IMAGES AND PREPROCESS
-# ===============================
-# Define image paths for the HSV images (these are images saved in HSV color space)
+
 image_paths = [
     "/content/frame_000_front_hsv.jpg",  # Front camera view (HSV image)
     "/content/frame_000_left_hsv.jpg",   # Left camera view (HSV image)
     "/content/frame_000_right_hsv.jpg"   # Right camera view (HSV image)
 ]
 
-# Define transformation (resize and convert to tensor)
-# Note: We omit normalization to keep the red mask intact.
+
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor()
@@ -1758,26 +1598,24 @@ transform = transforms.Compose([
 processed_images = []
 
 for img_path in image_paths:
-    # Load the image (which is stored in HSV format)
+    
     hsv_image = cv2.imread(img_path)
     if hsv_image is None:
         print(f"Warning: Could not load image at {img_path}")
         continue
-    # Convert the HSV image (stored in OpenCV format) back to RGB.
+  
     rgb_image = cv2.cvtColor(hsv_image, cv2.COLOR_HSV2RGB)
     hand_pil = Image.fromarray(rgb_image)
     processed_images.append(transform(hand_pil))
 
-# Concatenate images into a 9-channel tensor: [1, 9, 224, 224]
+
 input_tensor = torch.cat(processed_images, dim=0).unsqueeze(0)
 
-# ===============================
-# DISPLAY THE PREPROCESSED HSV HAND IMAGES
-# ===============================
+
 fig, axes = plt.subplots(1, 3, figsize=(12, 4))
 titles = ["Front HSV (RGB)", "Left HSV (RGB)", "Right HSV (RGB)"]
 for i in range(len(processed_images)):
-    # Since we did not normalize, we directly permute for display.
+ 
     img_display = processed_images[i].permute(1, 2, 0).cpu().numpy()
     axes[i].imshow(img_display)
     axes[i].axis("off")
@@ -1786,27 +1624,23 @@ plt.suptitle("Preprocessed HSV Hand Images (converted to RGB with red mask intac
 plt.tight_layout()
 plt.show()
 
-# ===============================
-# CHECK SHAPE AND VALUE RANGE
-# ===============================
+
 print("Input Tensor Shape (should be [1, 9, 224, 224]):", input_tensor.shape)
 for i, img in enumerate(processed_images):
     print(f"Image {titles[i]} - Min: {img.min().item()}, Max: {img.max().item()}")
 
-# Ensure input tensor is on the same device as the model
+
 input_tensor = input_tensor.to(device)
 
-# Perform inference
 with torch.no_grad():
     predicted_angles = model(input_tensor)
 
-# Convert predictions to a readable format
 predicted_angles = predicted_angles.cpu().numpy().flatten()
 
-# Display results
+
 print("Predicted Joint Angles:", predicted_angles)
 
-# Plot predicted joint angles
+
 fig, ax = plt.subplots(figsize=(8, 5))
 ax.bar(range(NUM_JOINTS), predicted_angles, color='b', alpha=0.7, label="Predicted Angles")
 ax.set_xlabel("Joint Index")
@@ -1829,26 +1663,20 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
-# ===============================
-# CONFIGURATION
-# ===============================
+
 DATASET_PATH = "/content/gesture_dataset"
 BATCH_SIZE = 64
 IMAGE_SIZE = (224, 224)
 NUM_JOINTS = 15
-ACCURACY_THRESHOLD = 5  # ±5° accuracy range
+ACCURACY_THRESHOLD = 5  
 
-# Cache paths (NEW cache for RGB data)
+
 SEGMENTED_CACHE_FILE = "cached_gesture_data.pt"
 RGB_CACHE_FILE = "cached_rgb_data.pt"
 
-# ===============================
-# RGB DATASET DEFINITION (For Student Model)
-# ===============================
+
 class RGBGestureDataset(Dataset):
-    """
-    Dataset for raw RGB images (no segmentation). This will be used for the student model.
-    """
+    
     def __init__(self, dataset_path, transform=None):
         self.dataset_path = dataset_path
         self.transform = transform
@@ -1868,7 +1696,7 @@ class RGBGestureDataset(Dataset):
                 frame_id = int(row["Frame"])
                 joint_angles = row.iloc[1:].values.astype(float)
 
-                # Raw RGB images (not segmented)
+       
                 front_rgb = os.path.join(gesture_folder, f"frame_{frame_id:03d}_front.jpg")
                 right_rgb = os.path.join(gesture_folder, f"frame_{frame_id:03d}_right.jpg")
                 left_rgb = os.path.join(gesture_folder, f"frame_{frame_id:03d}_left.jpg")
@@ -1893,26 +1721,22 @@ class RGBGestureDataset(Dataset):
             right_rgb = self.transform(right_rgb)
             left_rgb = self.transform(left_rgb)
 
-        # Concatenate the three views into one tensor with 9 channels
+      
         images = torch.cat([front_rgb, right_rgb, left_rgb], dim=0)  # Shape: [9, 224, 224]
 
         return images, torch.tensor(joint_angles, dtype=torch.float32)
 
-# ===============================
-# DATA TRANSFORMATIONS
-# ===============================
+
 transform = transforms.Compose([
     transforms.Resize(IMAGE_SIZE),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
 ])
 
-# Create the RGB dataset
+
 rgb_dataset = RGBGestureDataset(DATASET_PATH, transform)
 
-# ===============================
-# PREPROCESS & CACHE THE RGB DATA
-# ===============================
+
 if os.path.exists(RGB_CACHE_FILE):
     print(f"Loading cached RGB data from {RGB_CACHE_FILE}...")
     cached_rgb_data = torch.load(RGB_CACHE_FILE)
@@ -1925,9 +1749,7 @@ else:
     torch.save(cached_rgb_data, RGB_CACHE_FILE)
     print(f"Cached RGB preprocessed data to {RGB_CACHE_FILE}")
 
-# ===============================
-# CACHED DATASET DEFINITION (RGB)
-# ===============================
+
 class CachedRGBGestureDataset(Dataset):
     def __init__(self, data):
         self.data = data
@@ -1940,9 +1762,7 @@ class CachedRGBGestureDataset(Dataset):
 
 cached_rgb_dataset = CachedRGBGestureDataset(cached_rgb_data)
 
-# ===============================
-# SPLITTING THE CACHED RGB DATASET
-# ===============================
+
 train_size = int(0.8 * len(cached_rgb_dataset))
 val_size = int(0.1 * len(cached_rgb_dataset))
 test_size = len(cached_rgb_dataset) - train_size - val_size
@@ -1952,20 +1772,14 @@ print(f"Cached RGB Train Set: {len(train_rgb_dataset)} samples")
 print(f"Cached RGB Validation Set: {len(val_rgb_dataset)} samples")
 print(f"Cached RGB Test Set: {len(test_rgb_dataset)} samples")
 
-# ===============================
-# CREATING DATALOADERS FROM THE CACHED RGB DATASET
-# ===============================
+
 train_rgb_loader = DataLoader(train_rgb_dataset, batch_size=BATCH_SIZE, shuffle=True)
 val_rgb_loader = DataLoader(val_rgb_dataset, batch_size=BATCH_SIZE, shuffle=False)
 test_rgb_loader = DataLoader(test_rgb_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
-# ===============================
-# DEBUG: VISUALIZE SAMPLE DATA FROM CACHED RGB DATASET
-# ===============================
+
 def visualize_samples_rgb(dataset, num_samples=5):
-    """
-    Displays raw RGB hand images along with joint angles.
-    """
+    
     fig, axes = plt.subplots(num_samples, 4, figsize=(12, num_samples * 3))
     for i in range(num_samples):
         images, angles = dataset[i]
@@ -1984,18 +1798,13 @@ def visualize_samples_rgb(dataset, num_samples=5):
     plt.tight_layout()
     plt.show()
 
-# Display 5 sample images and their joint angles from the cached RGB training dataset
+
 visualize_samples_rgb(train_rgb_dataset, num_samples=5)
 
 from torch.utils.data import DataLoader, random_split
 
-# Assume CACHE_FILE and CachedGestureDataset are defined from previous caching code:
-# For example:
-# CACHE_FILE = "cached_gesture_data.pt"
-# cached_data = torch.load(CACHE_FILE)
-# cached_dataset = CachedGestureDataset(cached_data)
 
-# Split the cached dataset: 80% train, 10% validation, 10% test
+
 total_samples = len(cached_rgb_dataset)
 train_size = int(0.8 * total_samples)
 val_size = int(0.1 * total_samples)
@@ -2007,19 +1816,19 @@ print(f"Cached Train Set: {len(train_dataset)} samples")
 print(f"Cached Validation Set: {len(val_dataset)} samples")
 print(f"Cached Test Set: {len(test_dataset)} samples")
 
-# Create DataLoaders without re-running the segmentation
+
 train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
-# Fetch one sample from the cached dataset
+
 sample_images, sample_angles = cached_rgb_dataset[0]
 
 print("Sample image shape:", sample_images.shape)  # Expected: torch.Size([9, 224, 224])
-print("Sample joint angles shape:", sample_angles.shape)  # Expected: torch.Size([15])
+print("Sample joint angles shape:", sample_angles.shape)  
 
 import torch
-torch.cuda.empty_cache()  # Frees up cached memory
+torch.cuda.empty_cache() 
 
 import gc
 gc.collect()
