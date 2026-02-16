@@ -2,7 +2,7 @@ import cv2
 import pyrealsense2 as rs
 import numpy as np
 
-# Define camera IDs (change if needed)
+
 FRONT_CAM_ID = 2  # Replace with your front camera index
 LEFT_CAM_ID = 3   # Replace with your left camera index
 
@@ -47,7 +47,7 @@ while True:
     # Display all camera feeds
     cv2.imshow("Right Camera", front_img)
     cv2.imshow("Left Camera", left_img)
-    cv2.imshow("RealSense RGB Camera", color_image)  # Fix: Now correctly displays RealSense RGB
+    cv2.imshow("RealSense RGB Camera", color_image)  
 
     # Press 'q' to exit
     if cv2.waitKey(1) & 0xFF == ord('q'):
