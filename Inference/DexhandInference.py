@@ -15,15 +15,15 @@ import timm
 import matplotlib.pyplot as plt
 import serial  # Added for Arduino serial communication
 
-# -------------------------------
+
 # Define device before usage
-# -------------------------------
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
-# ---------------------------------------------------------------
+
 # Placeholder Definitions
-# ---------------------------------------------------------------
+
 class Denorm:
     def __init__(self, mean, std):
         self.mean = mean
@@ -34,9 +34,7 @@ class Denorm:
 def meanIoU(y_hat, y):
     return 0.0
 
-# ---------------------------------------------------------------
-# 1) DEEPLAB SEGMENTATION MODEL (HandSegModel)
-# ---------------------------------------------------------------
+
 class HandSegModel(pl.LightningModule):
     """
     This model is based on the PyTorch DeepLab model for semantic segmentation.
@@ -156,9 +154,9 @@ seg_model.eval()
 seg_model.to(device)
 print("HandSegModel loaded successfully!")
 
-# ---------------------------------------------------------------
-# 2) TRANSFORMS & HELPER FUNCTIONS FOR SEGMENTATION
-# ---------------------------------------------------------------
+
+
+
 seg_transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
@@ -214,9 +212,7 @@ def preprocess_for_dataset(hand_bgr: np.ndarray):
     pil_img = Image.fromarray(rgb_img)
     return final_transform(pil_img)
 
-# ---------------------------------------------------------------
-# 3) CLASSIFIER MODEL DEFINITION & LOADING (Joint Angle Prediction)
-# ---------------------------------------------------------------
+
 NUM_JOINTS = 15
 NUM_BINS = 10
 
@@ -238,9 +234,7 @@ classifier_model.load_state_dict(torch.load("mobilenetv2_hand_pose_classificatio
 classifier_model.eval()
 print("MobileNetV2HandClassifier loaded successfully!")
 
-# ---------------------------------------------------------------
-# 4) FRONT + WEBCAM SETUP (Using Front Webcam for Front View)
-# ---------------------------------------------------------------
+
 FRONT_CAM_ID = 1  # Front webcam replacing RealSense
 RIGHT_CAM_ID = 3
 LEFT_CAM_ID  = 2
@@ -258,9 +252,7 @@ if not left_cam.isOpened():
 
 print("Cameras ready. Press 'q' to quit.")
 
-# ---------------------------------------------------------------
-# Arduino Serial Communication Setup
-# ---------------------------------------------------------------
+
 try:
     ser = serial.Serial('COM6', 115200, timeout=5)  # Update COM port as needed
     print("Arduino serial connection established!")
@@ -268,9 +260,7 @@ except Exception as e:
     print(f"Error: Could not open Arduino serial connection: {e}")
     ser = None
 
-# ---------------------------------------------------------------
-# 5) OPTIONAL: SETUP MATPLOTLIB FOR LIVE BAR CHART DISPLAY
-# ---------------------------------------------------------------
+
 plt.ion()
 fig, ax = plt.subplots(figsize=(10, 5))
 
@@ -293,9 +283,7 @@ while True:
     if (now - last_seg_time) >= seg_interval:
         last_seg_time = now
 
-        # -------------------------------
-        # SEGMENT each frame using the segmentation model
-        # -------------------------------
+        
         seg_front, _ = segment_frame(front_bgr)
         seg_right, _ = segment_frame(right_bgr)
         seg_left,  _ = segment_frame(left_bgr)
@@ -313,20 +301,16 @@ while True:
         # Combine into a 9-channel tensor [1,9,224,224]
         combined_9ch = torch.cat([front_tensor, right_tensor, left_tensor], dim=0).unsqueeze(0).to(device)
 
-        # -------------------------------
-        # CLASSIFICATION: Predict Joint Angles
-        # -------------------------------
+        
         with torch.no_grad():
             logits = classifier_model(combined_9ch)  # shape: [1,15,10]
             pred_classes = torch.argmax(logits, dim=2).cpu().numpy()[0]
         pred_angles = 90 + pred_classes * 10
         print("Predicted Joint Angles:", pred_angles)
 
-        # ------------------------------------------------
-        # Process predicted angles into serial format
-        # ------------------------------------------------
+        
         # Convert predicted angles using the formula (angle - 90) * 2.
-        # For example, 90 -> 0, 100 -> 20, 110 -> 40, etc.
+        # 90 -> 0, 100 -> 20, 110 -> 40, etc.
         converted_angles = ((pred_angles - 90) * 2).astype(int)
         serial_angles = []
 
@@ -349,7 +333,7 @@ while True:
 
         print("Serial Format before index-specific formatting:", serial_angles)
 
-        # ------------------------------------------------
+        
         # Further format the serial angles based on index-specific rules:
         # For index 0, keep as is
         # For index 1, 180 - angle
@@ -367,7 +351,7 @@ while True:
         # For index 13, keep as is
         # For index 14, 180 - angle
         # For index 15, keep as is (fixed value 120)
-        # ------------------------------------------------
+        
         indices_to_flip = {1, 2, 4, 5, 6, 9, 12, 14}
         formatted_serial = []
         for i, angle in enumerate(serial_angles):
@@ -381,9 +365,7 @@ while True:
         # Store the new formatted serial message for continuous sending
         last_formatted_serial = formatted_serial
 
-        # -------------------------------
-        # Update live bar chart with predictions
-        # -------------------------------
+        
         ax.cla()
         ax.bar(np.arange(NUM_JOINTS) - 0.2, pred_angles, width=0.4,
                label="Predicted Angles (°)", color='blue', alpha=0.9, edgecolor='black')
@@ -415,9 +397,7 @@ while True:
         disp_right = right_bgr
         disp_left  = left_bgr
 
-    # -------------------------------
-    # Continuously send the last formatted serial message to Arduino
-    # -------------------------------
+    
     if last_formatted_serial is not None:
         serial_data = "[" + ", ".join(str(angle) for angle in last_formatted_serial) + "]"
         print("Serial message to Arduino:", serial_data)  # Debug print
@@ -425,9 +405,7 @@ while True:
             ser.write(serial_data.encode())
             ser.flush()  # Ensure the message is sent out
 
-    # -------------------------------
-    # Display the images
-    # -------------------------------
+    
     top_row = np.hstack([disp_front, disp_right, disp_left])
     cv2.imshow("3-Cams: Seg+HSV & Joint Angle Prediction", top_row)
     if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -437,9 +415,7 @@ while True:
     time.sleep(0.1)
 
 
-# ---------------------------------------------------------------
-# Cleanup
-# ---------------------------------------------------------------
+
 front_cam.release()
 right_cam.release()
 left_cam.release()
