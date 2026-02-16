@@ -32,7 +32,7 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 
-# === USER CONFIGURABLE SETTINGS ===
+
 NUM_IMAGES = 400  # Number of images per camera
 RIGHT_CAM_ID = 2   # Right Webcam index
 LEFT_CAM_ID = 3   # Left Webcam index
@@ -85,7 +85,7 @@ config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)  # Enable RG
 pipeline.start(config)
 
 
-# === Open Right and Left Webcams ===
+
 right_cam = cv2.VideoCapture(RIGHT_CAM_ID)
 left_cam = cv2.VideoCapture(LEFT_CAM_ID)
 
@@ -94,13 +94,13 @@ if not right_cam.isOpened():
 if not left_cam.isOpened():
     print("Error: Could not open Left Camera.")
 
-# === Start Countdown ===
-for i in range(5, 0, -1):
-    print(f"⏳ Starting in {i} seconds...")
-    time.sleep(1)
-print("📸 Collecting Data (Move Hand Only Once)...")
 
-# === PHASE 1: Collect and Save RAW Images ===
+for i in range(5, 0, -1):
+    print(f"Starting in {i} seconds...")
+    time.sleep(1)
+print("-Collecting Data (Move Hand Only Once)...")
+
+
 for i in range(NUM_IMAGES):
     # Get RealSense RGB frame
     frames = pipeline.wait_for_frames()
@@ -122,20 +122,20 @@ for i in range(NUM_IMAGES):
         raw_image_path = os.path.join(gesture_folder, f"frame_{i:03d}_{suffix}.jpg")
         cv2.imwrite(raw_image_path, img)
 
-    # === Apply ±5 Degree Random Variation Per Frame ===
+    
     frame_angles = [angle + random.uniform(-5, 5) for angle in base_angles]
 
-    # === Append Data to CSV ===
+    
     new_angle_row = pd.DataFrame([[i] + frame_angles], columns=["Frame"] + ANGLE_COLUMNS)
     angles_df = pd.concat([angles_df, new_angle_row], ignore_index=True)
 
     print(f"Collected Frame {i+1}/{NUM_IMAGES}")
 
-# === Save CSV Files ===
+
 angles_df.to_csv(angles_csv_path, index=False)
 print(f"Angles data saved to {angles_csv_path}")
 
-# === Cleanup Camera Resources ===
+
 pipeline.stop()
 right_cam.release()
 left_cam.release()
@@ -325,4 +325,4 @@ for i in range(NUM_IMAGES):
         # Run segmentation and save
         segment_and_save(raw_image_path, segmented_image_path)
 
-print("All images segmented and saved!")
+print("All images segmented and saved")
